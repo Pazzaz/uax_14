@@ -1,5 +1,4 @@
 #![feature(exclusive_range_pattern)]
-extern crate regex;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 enum Class {
@@ -168,9 +167,9 @@ fn main() {
     let mut ri_count = 0;
     let mut class_before_spaces: Option<Class> = None;
     for i in 0..(classes.len() - 1) {
-        if classes[i+1] == Class::RI {
+        if classes[i + 1] == Class::RI {
             ri_count += 1;
-        }  else {
+        } else {
             ri_count = 0;
         }
         // LB8, LB14, LB15, LB16, LB17 all need to keep track of characters before spaces.
@@ -244,8 +243,13 @@ fn main() {
             (Class::SP, Class::OP) if class_before_spaces == Some(Class::QU) => Break::Prohibited,
 
             // LB16
-            (Class::CL, Class::NS) | (Class::CP, Class::NS)=> Break::Prohibited,
-            (Class::SP, Class::NS) if (class_before_spaces == Some(Class::CL)) | (class_before_spaces == Some(Class::CP)) => Break::Prohibited,
+            (Class::CL, Class::NS) | (Class::CP, Class::NS) => Break::Prohibited,
+            (Class::SP, Class::NS)
+                if (class_before_spaces == Some(Class::CL))
+                    | (class_before_spaces == Some(Class::CP)) =>
+            {
+                Break::Prohibited
+            }
 
             // LB17
             (Class::B2, Class::B2) => Break::Prohibited,
@@ -264,12 +268,13 @@ fn main() {
             (x, Class::BA) | (x, Class::HY) => {
                 // LB21a
                 if x == Class::HL {
+                    // Move this if this for loop is converted to an Iterator.
                     splits.push(Break::Prohibited);
                     splits.push(Break::Prohibited);
                     continue;
                 }
                 Break::Prohibited
-            },
+            }
             (_, Class::NS) | (Class::BB, _) => Break::Prohibited,
 
             // LB21b
@@ -381,7 +386,7 @@ fn main() {
             (_, _) => Break::Opportunity,
         };
 
-        // LB8, LB14, LB15, LB16, LB17 all need to keep track of characters before spaces.
+        // LB8, LB14, LB15, LB16, LB17
         if classes[i] == Class::SP && classes[i + 1] != Class::SP {
             class_before_spaces = None;
         }
