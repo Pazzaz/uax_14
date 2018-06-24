@@ -65,108 +65,134 @@ enum Break {
 }
 
 // fn to_enum(n: &str) -> Class {
-    //     match n {
-    //         "BK" => Class::BK,
-    //         "CR" => Class::CR,
-    //         "LF" => Class::LF,
-    //         "CM" => Class::CM,
-    //         "NL" => Class::NL,
-    //         "SG" => Class::SG,
-    //         "WJ" => Class::WJ,
-    //         "ZW" => Class::ZW,
-    //         "GL" => Class::GL,
-    //         "SP" => Class::SP,
-    //         "ZWJ" => Class::ZWJ,
-    //         "B2" => Class::B2,
-    //         "BA" => Class::BA,
-    //         "BB" => Class::BB,
-    //         "HY" => Class::HY,
-    //         "CB" => Class::CB,
-    //         "CL" => Class::CL,
-    //         "CP" => Class::CP,
-    //         "EX" => Class::EX,
-    //         "IN" => Class::IN,
-    //         "NS" => Class::NS,
-    //         "OP" => Class::OP,
-    //         "QU" => Class::QU,
-    //         "IS" => Class::IS,
-    //         "NU" => Class::NU,
-    //         "PO" => Class::PO,
-    //         "PR" => Class::PR,
-    //         "SY" => Class::SY,
-    //         "AI" => Class::AI,
-    //         "AL" => Class::AL,
-    //         "CJ" => Class::CJ,
-    //         "EB" => Class::EB,
-    //         "EM" => Class::EM,
-    //         "H2" => Class::H2,
-    //         "H3" => Class::H3,
-    //         "HL" => Class::HL,
-    //         "ID" => Class::ID,
-    //         "JL" => Class::JL,
-    //         "JV" => Class::JV,
-    //         "JT" => Class::JT,
-    //         "RI" => Class::RI,
-    //         "SA" => Class::SA,
-    //         "XX" => Class::XX,
-    //         a => {
-    //             println!("{}", a);
-    //             panic!();
-    //         }
-    //     }
-    // }
+//     match n {
+//         "BK" => Class::BK,
+//         "CR" => Class::CR,
+//         "LF" => Class::LF,
+//         "CM" => Class::CM,
+//         "NL" => Class::NL,
+//         "SG" => Class::SG,
+//         "WJ" => Class::WJ,
+//         "ZW" => Class::ZW,
+//         "GL" => Class::GL,
+//         "SP" => Class::SP,
+//         "ZWJ" => Class::ZWJ,
+//         "B2" => Class::B2,
+//         "BA" => Class::BA,
+//         "BB" => Class::BB,
+//         "HY" => Class::HY,
+//         "CB" => Class::CB,
+//         "CL" => Class::CL,
+//         "CP" => Class::CP,
+//         "EX" => Class::EX,
+//         "IN" => Class::IN,
+//         "NS" => Class::NS,
+//         "OP" => Class::OP,
+//         "QU" => Class::QU,
+//         "IS" => Class::IS,
+//         "NU" => Class::NU,
+//         "PO" => Class::PO,
+//         "PR" => Class::PR,
+//         "SY" => Class::SY,
+//         "AI" => Class::AI,
+//         "AL" => Class::AL,
+//         "CJ" => Class::CJ,
+//         "EB" => Class::EB,
+//         "EM" => Class::EM,
+//         "H2" => Class::H2,
+//         "H3" => Class::H3,
+//         "HL" => Class::HL,
+//         "ID" => Class::ID,
+//         "JL" => Class::JL,
+//         "JV" => Class::JV,
+//         "JT" => Class::JT,
+//         "RI" => Class::RI,
+//         "SA" => Class::SA,
+//         "XX" => Class::XX,
+//         a => {
+//             println!("{}", a);
+//             panic!();
+//         }
+//     }
+// }
 // CODE TO GENERATE A TABLE, SORT-OF
-    // use regex::Regex;
-    // use std::collections::HashMap;
-    // use std::fs::File;
-    // use std::io::prelude::*;
-    // let re = Regex::new(r"(((0-9a-zA-Z)+)(\.\.(0-9a-zA-Z)+)?);((A-Z0-9)+)").unwrap(); // ZWJ
-    // let mut all_lines = String::new();
-    // let mut f = File::open(r"C:\Users\Pontus\Documents\uax-14\data.txt").unwrap();
-    // let mut hash: HashMap<Class, Vec<&str>> = HashMap::new();
-    // f.read_to_string(&mut all_lines).unwrap();
-    // for caps in re.captures_iter(&all_lines) {
-    //     let numbers = caps.get(1).unwrap().as_str();
-    //     let class = caps.get(4).unwrap().as_str();
-    //     hash.entry(to_enum(class))
-    //         .or_insert(Vec::new())
-    //         .push(numbers);
-    // }
-    // for (key, value) in hash {
-    //     println!("{} => Class::{:?},", value.join(" | 0x"), key);
-    // }
+// use regex::Regex;
+// use std::collections::HashMap;
+// use std::fs::File;
+// use std::io::prelude::*;
+// let re = Regex::new(r"(((0-9a-zA-Z)+)(\.\.(0-9a-zA-Z)+)?);((A-Z0-9)+)").unwrap(); // ZWJ
+// let mut all_lines = String::new();
+// let mut f = File::open(r"C:\Users\Pontus\Documents\uax-14\data.txt").unwrap();
+// let mut hash: HashMap<Class, Vec<&str>> = HashMap::new();
+// f.read_to_string(&mut all_lines).unwrap();
+// for caps in re.captures_iter(&all_lines) {
+//     let numbers = caps.get(1).unwrap().as_str();
+//     let class = caps.get(4).unwrap().as_str();
+//     hash.entry(to_enum(class))
+//         .or_insert(Vec::new())
+//         .push(numbers);
+// }
+// for (key, value) in hash {
+//     println!("{} => Class::{:?},", value.join(" | 0x"), key);
+// }
 
 // GENERAL CATEGORY CODE
-    // let Mc = [ // Insert numbers here
-    // ];
-    // let mut collected: Vec<(u32, Option<u32>)> = Vec::new();
-    // let mut lower = Mc(0);
-    // let mut higher = None;
-    // for window in Mc.windows(2) {
-    //     if window(0) == window(1) - 1 {
-    //         higher = Some(window(1));
-    //     } else {
-    //         collected.push((lower, higher));
-    //         higher = None;
-    //         lower = window(1)
-    //     }
-    // }
-    // collected.push((lower, higher));
-    // for part in collected {
-    //     match part.1 {
-    //         Some(x) => println!("0x{:X}..=0x{:X},", part.0, x),
-    //         None => println!("0x{:X},", part.0),
-    //     }
-    // }
+// let Mc = [ // Insert numbers here
+// ];
+// let mut collected: Vec<(u32, Option<u32>)> = Vec::new();
+// let mut lower = Mc(0);
+// let mut higher = None;
+// for window in Mc.windows(2) {
+//     if window(0) == window(1) - 1 {
+//         higher = Some(window(1));
+//     } else {
+//         collected.push((lower, higher));
+//         higher = None;
+//         lower = window(1)
+//     }
+// }
+// collected.push((lower, higher));
+// for part in collected {
+//     match part.1 {
+//         Some(x) => println!("0x{:X}..=0x{:X},", part.0, x),
+//         None => println!("0x{:X},", part.0),
+//     }
+// }
 
 fn main() {
     let text = r"a 🙋text ";
-    let classes = text.chars().map(convert).collect::<Vec<Class>>();
+    let mut classes = text.chars().map(convert).collect::<Vec<Class>>();
     println!("{:?}", classes);
     let mut splits: Vec<Break> = Vec::with_capacity(classes.len());
     splits.push(Break::Prohibited);
-    for i in 0..(classes.len()-1) {
-        let b = match (classes[i], classes[i+1]) {
+    let mut ri_count = 0;
+    let mut class_before_spaces: Option<Class> = None;
+    for i in 0..(classes.len() - 1) {
+        if classes[i+1] == Class::RI {
+            ri_count += 1;
+        }  else {
+            ri_count = 0;
+        }
+        // LB8, LB14, LB15, LB16, LB17 all need to keep track of characters before spaces.
+        if classes[i] != Class::SP && classes[i + 1] == Class::SP {
+            class_before_spaces = Some(classes[i]);
+
+        // LB9
+        } else if classes[i] != Class::BK
+            && classes[i] != Class::CR
+            && classes[i] != Class::LF
+            && classes[i] != Class::NL
+            && classes[i] != Class::SP
+            && classes[i] != Class::ZW
+            && ((classes[i + 1] == Class::CM) | (classes[i + 1] == Class::ZWJ))
+        {
+            classes[i + 1] = classes[i];
+
+        // LB10
+        } else if (classes[i + 1] == Class::CM) | (classes[i + 1] == Class::ZWJ) {
+            classes[i + 1] = Class::AL
+        }
+        let b = match (classes[i], classes[i + 1]) {
             // LB4
             (Class::BK, _) => Break::Mandatory,
 
@@ -181,17 +207,17 @@ fn main() {
             (_, Class::SP) | (_, Class::ZW) => Break::Prohibited,
 
             // LB8
-            // Store the information in the space
+            (Class::ZW, _) => Break::Opportunity,
+            (Class::SP, _) if class_before_spaces == Some(Class::ZW) => Break::Opportunity,
 
             // LB8a
             (Class::ZWJ, _) => Break::Prohibited,
 
             // LB9
-            // Mutate the upper part of the pair to become the same value as the lower pair. Should
-            // probably be done before the match statement.
+            // Done before the match statement.
 
             // LB10
-            // See LB9
+            // Done before match statement
 
             // LB11
             (_, Class::WJ) | (Class::WJ, _) => Break::Prohibited,
@@ -210,16 +236,20 @@ fn main() {
             }
 
             // LB14
-            // See LB8
+            (Class::OP, _) => Break::Prohibited,
+            (Class::SP, _) if class_before_spaces == Some(Class::OP) => Break::Prohibited,
 
             // LB15
-            // See LB8
+            (Class::QU, Class::OP) => Break::Prohibited,
+            (Class::SP, Class::OP) if class_before_spaces == Some(Class::QU) => Break::Prohibited,
 
             // LB16
-            // See LB8
+            (Class::CL, Class::NS) | (Class::CP, Class::NS)=> Break::Prohibited,
+            (Class::SP, Class::NS) if (class_before_spaces == Some(Class::CL)) | (class_before_spaces == Some(Class::CP)) => Break::Prohibited,
 
             // LB17
-            // See LB8
+            (Class::B2, Class::B2) => Break::Prohibited,
+            (Class::SP, Class::B2) if class_before_spaces == Some(Class::B2) => Break::Prohibited,
 
             // LB18
             (Class::SP, _) => Break::Opportunity,
@@ -231,10 +261,16 @@ fn main() {
             (Class::CB, _) | (_, Class::CB) => Break::Opportunity,
 
             // LB21
-            (_, Class::BA) | (_, Class::HY) | (_, Class::NS) | (Class::BB, _) => Break::Prohibited,
-
-            // LB21a
-            // Inject into (HY | BA) if they had a HL before
+            (x, Class::BA) | (x, Class::HY) => {
+                // LB21a
+                if x == Class::HL {
+                    splits.push(Break::Prohibited);
+                    splits.push(Break::Prohibited);
+                    continue;
+                }
+                Break::Prohibited
+            },
+            (_, Class::NS) | (Class::BB, _) => Break::Prohibited,
 
             // LB21b
             (Class::SY, Class::HL) => Break::Prohibited,
@@ -336,7 +372,7 @@ fn main() {
             | (Class::CP, Class::NU) => Break::Prohibited,
 
             // LB30a
-            // Implement later, counter?
+            (Class::RI, Class::RI) if ri_count % 2 == 0 => Break::Prohibited,
 
             // LB30b
             (Class::EB, Class::EM) => Break::Prohibited,
@@ -344,6 +380,11 @@ fn main() {
             // LB31
             (_, _) => Break::Opportunity,
         };
+
+        // LB8, LB14, LB15, LB16, LB17 all need to keep track of characters before spaces.
+        if classes[i] == Class::SP && classes[i + 1] != Class::SP {
+            class_before_spaces = None;
+        }
         splits.push(b);
     }
     splits.push(Break::Opportunity);
