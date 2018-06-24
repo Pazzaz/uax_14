@@ -1,0 +1,7 @@
+[package]
+name = "uax-14"
+version = "0.1.0"
+authors = ["Pazzaz <pazzaz.sundqvist@gmail.com>"]
+
+[dependencies]
+regex = "1.0.0"
