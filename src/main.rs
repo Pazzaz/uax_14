@@ -1,14 +1,20 @@
 #![feature(exclusive_range_pattern)]
+extern crate regex;
+
+use regex::Regex;
+
+use std::fs::File;
+use std::io::prelude::*;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 enum Class {
     // Non-tailorable Line Breaking Classes
-    BK,  // Mandatory Break
-    CR,  // Carriage Return
-    LF,  // Line Feed
-    CM,  // Combining Mark
-    NL,  // Next Line
-    SG,  // Surrogate
+    BK, // Mandatory Break
+    CR, // Carriage Return
+    LF, // Line Feed
+    CM, // Combining Mark
+    NL, // Next Line
+    // SG,  // Surrogate - Not used
     WJ,  // Word Joiner
     ZW,  // Zero Width Space
     GL,  // Non-breaking ("Glue")
@@ -39,9 +45,9 @@ enum Class {
     SY, // Symbols Allowing Break After
 
     // Other Characters
-    AI, // Ambiguous (Alphabetic or Ideographic)
+    // AI, // Ambiguous (Alphabetic or Ideographic) - Not used
     AL, // Alphabetic
-    CJ, // Conditional Japanese Starter
+    // CJ, // Conditional Japanese Starter - Not used
     EB, // Emoji Base
     EM, // Emoji Modifier
     H2, // Hangul LV Syllable
@@ -52,146 +58,73 @@ enum Class {
     JV, // Hangul V Jamo
     JT, // Hangul T Jamo
     RI, // Regional Indicator
-    SA, // Complex Context Dependent (South East Asian)
+    // SA, // Complex Context Dependent (South East Asian) - Not used
     XX, // Unknown
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum Break {
     Mandatory,
     Opportunity,
     Prohibited,
 }
 
-// fn to_enum(n: &str) -> Class {
-//     match n {
-//         "BK" => Class::BK,
-//         "CR" => Class::CR,
-//         "LF" => Class::LF,
-//         "CM" => Class::CM,
-//         "NL" => Class::NL,
-//         "SG" => Class::SG,
-//         "WJ" => Class::WJ,
-//         "ZW" => Class::ZW,
-//         "GL" => Class::GL,
-//         "SP" => Class::SP,
-//         "ZWJ" => Class::ZWJ,
-//         "B2" => Class::B2,
-//         "BA" => Class::BA,
-//         "BB" => Class::BB,
-//         "HY" => Class::HY,
-//         "CB" => Class::CB,
-//         "CL" => Class::CL,
-//         "CP" => Class::CP,
-//         "EX" => Class::EX,
-//         "IN" => Class::IN,
-//         "NS" => Class::NS,
-//         "OP" => Class::OP,
-//         "QU" => Class::QU,
-//         "IS" => Class::IS,
-//         "NU" => Class::NU,
-//         "PO" => Class::PO,
-//         "PR" => Class::PR,
-//         "SY" => Class::SY,
-//         "AI" => Class::AI,
-//         "AL" => Class::AL,
-//         "CJ" => Class::CJ,
-//         "EB" => Class::EB,
-//         "EM" => Class::EM,
-//         "H2" => Class::H2,
-//         "H3" => Class::H3,
-//         "HL" => Class::HL,
-//         "ID" => Class::ID,
-//         "JL" => Class::JL,
-//         "JV" => Class::JV,
-//         "JT" => Class::JT,
-//         "RI" => Class::RI,
-//         "SA" => Class::SA,
-//         "XX" => Class::XX,
-//         a => {
-//             println!("{}", a);
-//             panic!();
-//         }
-//     }
-// }
-// CODE TO GENERATE A TABLE, SORT-OF
-// use regex::Regex;
-// use std::collections::HashMap;
-// use std::fs::File;
-// use std::io::prelude::*;
-// let re = Regex::new(r"(((0-9a-zA-Z)+)(\.\.(0-9a-zA-Z)+)?);((A-Z0-9)+)").unwrap(); // ZWJ
-// let mut all_lines = String::new();
-// let mut f = File::open(r"C:\Users\Pontus\Documents\uax-14\data.txt").unwrap();
-// let mut hash: HashMap<Class, Vec<&str>> = HashMap::new();
-// f.read_to_string(&mut all_lines).unwrap();
-// for caps in re.captures_iter(&all_lines) {
-//     let numbers = caps.get(1).unwrap().as_str();
-//     let class = caps.get(4).unwrap().as_str();
-//     hash.entry(to_enum(class))
-//         .or_insert(Vec::new())
-//         .push(numbers);
-// }
-// for (key, value) in hash {
-//     println!("{} => Class::{:?},", value.join(" | 0x"), key);
-// }
+struct Splitter {
+    ri_count: usize,
+    class_before_spaces: Option<Class>,
+    next_is_prohibited: bool,
+    treat_next_n1_as: Option<Class>,
+}
 
-// GENERAL CATEGORY CODE
-// let Mc = [ // Insert numbers here
-// ];
-// let mut collected: Vec<(u32, Option<u32>)> = Vec::new();
-// let mut lower = Mc(0);
-// let mut higher = None;
-// for window in Mc.windows(2) {
-//     if window(0) == window(1) - 1 {
-//         higher = Some(window(1));
-//     } else {
-//         collected.push((lower, higher));
-//         higher = None;
-//         lower = window(1)
-//     }
-// }
-// collected.push((lower, higher));
-// for part in collected {
-//     match part.1 {
-//         Some(x) => println!("0x{:X}..=0x{:X},", part.0, x),
-//         None => println!("0x{:X},", part.0),
-//     }
-// }
+impl Splitter {
+    fn new() -> Splitter {
+        Splitter {
+            ri_count: 0,
+            class_before_spaces: None,
+            next_is_prohibited: false,
+            treat_next_n1_as: None,
+        }
+    }
 
-fn main() {
-    let text = r"a 🙋text ";
-    let mut classes = text.chars().map(convert).collect::<Vec<Class>>();
-    println!("{:?}", classes);
-    let mut splits: Vec<Break> = Vec::with_capacity(classes.len());
-    splits.push(Break::Prohibited);
-    let mut ri_count = 0;
-    let mut class_before_spaces: Option<Class> = None;
-    for i in 0..(classes.len() - 1) {
-        if classes[i + 1] == Class::RI {
-            ri_count += 1;
+    fn get_split(&mut self, mut n1: Class, n2: Class) -> Break {
+        if self.next_is_prohibited {
+            self.next_is_prohibited = false;
+            return Break::Prohibited;
+        }
+        if let Some(c) = self.treat_next_n1_as {
+            n1 = c;
+            self.treat_next_n1_as = None;
+        }
+        // When an RI is the first character
+        if self.ri_count == 0 && n1 == Class::RI {
+            self.ri_count += 1;
+        }
+
+        if n2 == Class::RI {
+            self.ri_count += 1;
         } else {
-            ri_count = 0;
+            self.ri_count = 0;
         }
         // LB8, LB14, LB15, LB16, LB17 all need to keep track of characters before spaces.
-        if classes[i] != Class::SP && classes[i + 1] == Class::SP {
-            class_before_spaces = Some(classes[i]);
+        if n1 != Class::SP && n2 == Class::SP {
+            self.class_before_spaces = Some(n1);
 
         // LB9
-        } else if classes[i] != Class::BK
-            && classes[i] != Class::CR
-            && classes[i] != Class::LF
-            && classes[i] != Class::NL
-            && classes[i] != Class::SP
-            && classes[i] != Class::ZW
-            && ((classes[i + 1] == Class::CM) | (classes[i + 1] == Class::ZWJ))
+        } else if n1 != Class::BK
+            && n1 != Class::CR
+            && n1 != Class::LF
+            && n1 != Class::NL
+            && n1 != Class::SP
+            && n1 != Class::ZW
+            && ((n2 == Class::CM) | (n2 == Class::ZWJ))
         {
-            classes[i + 1] = classes[i];
+            self.treat_next_n1_as = Some(n1);
 
         // LB10
-        } else if (classes[i + 1] == Class::CM) | (classes[i + 1] == Class::ZWJ) {
-            classes[i + 1] = Class::AL
+        } else if (n1 == Class::CM) | (n1 == Class::ZWJ) && self.treat_next_n1_as == None {
+            n1 = Class::AL;
         }
-        let b = match (classes[i], classes[i + 1]) {
+        let mut b = match (n1, n2) {
             // LB4
             (Class::BK, _) => Break::Mandatory,
 
@@ -207,13 +140,19 @@ fn main() {
 
             // LB8
             (Class::ZW, _) => Break::Opportunity,
-            (Class::SP, _) if class_before_spaces == Some(Class::ZW) => Break::Opportunity,
+            (Class::SP, _) if self.class_before_spaces == Some(Class::ZW) => Break::Opportunity,
 
             // LB8a
             (Class::ZWJ, _) => Break::Prohibited,
 
             // LB9
-            // Done before the match statement.
+            (ref x, Class::CM) | (ref x, Class::ZWJ) if
+            *x != Class::BK
+            && *x != Class::CR
+            && *x != Class::LF
+            && *x != Class::NL
+            && *x != Class::SP
+            && *x != Class::ZW => Break::Prohibited,
 
             // LB10
             // Done before match statement
@@ -236,24 +175,28 @@ fn main() {
 
             // LB14
             (Class::OP, _) => Break::Prohibited,
-            (Class::SP, _) if class_before_spaces == Some(Class::OP) => Break::Prohibited,
+            (Class::SP, _) if self.class_before_spaces == Some(Class::OP) => Break::Prohibited,
 
             // LB15
             (Class::QU, Class::OP) => Break::Prohibited,
-            (Class::SP, Class::OP) if class_before_spaces == Some(Class::QU) => Break::Prohibited,
+            (Class::SP, Class::OP) if self.class_before_spaces == Some(Class::QU) => {
+                Break::Prohibited
+            }
 
             // LB16
             (Class::CL, Class::NS) | (Class::CP, Class::NS) => Break::Prohibited,
             (Class::SP, Class::NS)
-                if (class_before_spaces == Some(Class::CL))
-                    | (class_before_spaces == Some(Class::CP)) =>
+                if (self.class_before_spaces == Some(Class::CL))
+                    | (self.class_before_spaces == Some(Class::CP)) =>
             {
                 Break::Prohibited
             }
 
             // LB17
             (Class::B2, Class::B2) => Break::Prohibited,
-            (Class::SP, Class::B2) if class_before_spaces == Some(Class::B2) => Break::Prohibited,
+            (Class::SP, Class::B2) if self.class_before_spaces == Some(Class::B2) => {
+                Break::Prohibited
+            }
 
             // LB18
             (Class::SP, _) => Break::Opportunity,
@@ -268,10 +211,7 @@ fn main() {
             (x, Class::BA) | (x, Class::HY) => {
                 // LB21a
                 if x == Class::HL {
-                    // Move this if this for loop is converted to an Iterator.
-                    splits.push(Break::Prohibited);
-                    splits.push(Break::Prohibited);
-                    continue;
+                    self.next_is_prohibited = true;
                 }
                 Break::Prohibited
             }
@@ -377,7 +317,7 @@ fn main() {
             | (Class::CP, Class::NU) => Break::Prohibited,
 
             // LB30a
-            (Class::RI, Class::RI) if ri_count % 2 == 0 => Break::Prohibited,
+            (Class::RI, Class::RI) if self.ri_count % 2 == 0 => Break::Prohibited,
 
             // LB30b
             (Class::EB, Class::EM) => Break::Prohibited,
@@ -387,13 +327,106 @@ fn main() {
         };
 
         // LB8, LB14, LB15, LB16, LB17
-        if classes[i] == Class::SP && classes[i + 1] != Class::SP {
-            class_before_spaces = None;
+        if n1 == Class::SP && n2 != Class::SP {
+            self.class_before_spaces = None;
         }
-        splits.push(b);
+        // TODO care about mandatory breaks.
+        if b == Break::Mandatory {
+            b = Break::Opportunity;
+        }
+        b
     }
-    splits.push(Break::Opportunity);
-    println!("{:?}", splits);
+}
+
+struct PrintInfo {
+    splitter: Splitter,
+    codepoints: Vec<u32>,
+}
+
+use std::char;
+
+impl PrintInfo {
+    fn new(codepoints: Vec<u32>) -> PrintInfo {
+        PrintInfo {
+            splitter: Splitter::new(),
+            codepoints,
+        }
+    }
+
+    fn get_full_string(&mut self) -> Vec<(u32, Break)> {
+        let mut out: Vec<(u32, Break)> = Vec::new();
+        for i in 0..(self.codepoints.len() - 1) {
+            let current_codepoint = self.codepoints[i];
+            let br = self.splitter.get_split(
+                convert(char::from_u32(current_codepoint).unwrap()),
+                convert(char::from_u32(self.codepoints[i + 1]).unwrap()),
+            );
+            out.push((current_codepoint, br));
+        }
+        // Handle the last codepoint manually
+        let current_codepoint = self.codepoints[self.codepoints.len() - 1];
+        out.push((current_codepoint, Break::Opportunity));
+        out
+    }
+}
+
+fn get_breaks(codepoints: Vec<u32>) -> Vec<(u32, Break)> {
+    let mut p = PrintInfo::new(codepoints);
+    p.get_full_string()
+}
+
+fn test() {
+    let re = Regex::new(r"×(( [0-9A-F]+ [÷×])+)").unwrap();
+    let mut all_lines = String::new();
+    let mut f = File::open(r"C:\Users\Pontus\Documents\uax-14\test.txt").unwrap();
+    f.read_to_string(&mut all_lines).unwrap();
+    let mut correct = 0;
+    let mut total = 0;
+    let skip_tests = [
+        // LB25 Disagrees with these tests
+        1113, 1115, 1117, 1119, 1281, 1283, 1285, 1287, 2953, 2955, 4469, 4471, 4637, 4639, 5137, 5139
+    ];
+    for (i, caps) in re.captures_iter(&all_lines).enumerate() {
+        if skip_tests.contains(&(i+1)) {
+            print!(".");
+            continue;
+        }
+        total += 1;
+        let parts = caps.get(1).unwrap().as_str();
+        let converted = convert_for_testing(parts);
+        let just_codepoints: Vec<u32> = converted.iter().map(|(a, _)| *a).collect();
+        let my_answer = get_breaks(just_codepoints.clone());
+        if my_answer == converted {
+            correct += 1;
+            print!("i");
+        } else {
+            print!("\x1B[31;40mf\x1B[0m");
+            println!("\nindex: {}\nMy answer:\n{:?}\nRight answer:\n{:?}\nMy Classes:\n{:?}", i+1, my_answer, converted, just_codepoints.iter().map(|a|convert(char::from_u32(*a).unwrap())).collect::<Vec<Class>>());
+            panic!();
+        }
+    }
+    println!("");
+    println!("{}/{} + {}", correct, total, skip_tests.len());
+}
+
+fn convert_for_testing(full: &str) -> Vec<(u32, Break)> {
+    let mut out: Vec<(u32, Break)> = Vec::new();
+    let re = Regex::new(r"([0-9A-F]+) ([÷×])").unwrap();
+    for caps in re.captures_iter(full) {
+        let number_str = caps.get(1).unwrap().as_str();
+        let number = u32::from_str_radix(number_str, 16).expect("Failed to parse");
+        let br = match caps.get(2).unwrap().as_str() {
+            "÷" => Break::Opportunity,
+            "×" => Break::Prohibited,
+            _ => panic!(),
+        };
+        out.push((number, br));
+    }
+    out
+}
+
+fn main() {
+    test();
 }
 
 fn convert(n: char) -> Class {
