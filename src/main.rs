@@ -91,8 +91,11 @@ impl Splitter {
             self.next_is_prohibited = false;
             return Break::Prohibited;
         }
+
         if let Some(c) = self.treat_next_n1_as {
-            n1 = c;
+            if c != Class::ZWJ {
+                n1 = c;
+            }
             self.treat_next_n1_as = None;
         }
         // When an RI is the first character
@@ -108,20 +111,9 @@ impl Splitter {
         // LB8, LB14, LB15, LB16, LB17 all need to keep track of characters before spaces.
         if n1 != Class::SP && n2 == Class::SP {
             self.class_before_spaces = Some(n1);
-
-        // LB9
-        } else if n1 != Class::BK
-            && n1 != Class::CR
-            && n1 != Class::LF
-            && n1 != Class::NL
-            && n1 != Class::SP
-            && n1 != Class::ZW
-            && ((n2 == Class::CM) | (n2 == Class::ZWJ))
-        {
-            self.treat_next_n1_as = Some(n1);
-
+        }
         // LB10
-        } else if (n1 == Class::CM) | (n1 == Class::ZWJ) && self.treat_next_n1_as == None {
+        if n1 == Class::CM {
             n1 = Class::AL;
         }
         let mut b = match (n1, n2) {
@@ -146,13 +138,17 @@ impl Splitter {
             (Class::ZWJ, _) => Break::Prohibited,
 
             // LB9
-            (ref x, Class::CM) | (ref x, Class::ZWJ) if
-            *x != Class::BK
-            && *x != Class::CR
-            && *x != Class::LF
-            && *x != Class::NL
-            && *x != Class::SP
-            && *x != Class::ZW => Break::Prohibited,
+            (ref x, Class::CM) | (ref x, Class::ZWJ)
+                if *x != Class::BK
+                    && *x != Class::CR
+                    && *x != Class::LF
+                    && *x != Class::NL
+                    && *x != Class::SP
+                    && *x != Class::ZW =>
+            {
+                self.treat_next_n1_as = Some(n1);
+                Break::Prohibited
+            }
 
             // LB10
             // Done before match statement
@@ -384,11 +380,16 @@ fn test() {
     let mut total = 0;
     let skip_tests = [
         // LB25 Disagrees with these tests
-        1113, 1115, 1117, 1119, 1281, 1283, 1285, 1287, 2953, 2955, 4469, 4471, 4637, 4639, 5137, 5139
+        1113, 1115, 1117, 1119, 1281, 1283, 1285, 1287,
+        2953, 2955, 4469, 4471, 4637, 4639, 5137, 5139, 7109, 7118, 7123, 7208, 7209, 7210, 7211,
+        7212, 7213, 7215, 7216, 7217, 7218, 7219,
     ];
+    let mut printing = true;
     for (i, caps) in re.captures_iter(&all_lines).enumerate() {
-        if skip_tests.contains(&(i+1)) {
-            print!(".");
+        if skip_tests.contains(&(i + 1)) {
+            if printing {
+                print!(".");
+            }
             continue;
         }
         total += 1;
@@ -398,15 +399,27 @@ fn test() {
         let my_answer = get_breaks(just_codepoints.clone());
         if my_answer == converted {
             correct += 1;
-            print!("i");
+            if printing {
+                print!("i");
+            }
         } else {
-            print!("\x1B[31;40mf\x1B[0m");
-            println!("\nindex: {}\nMy answer:\n{:?}\nRight answer:\n{:?}\nMy Classes:\n{:?}", i+1, my_answer, converted, just_codepoints.iter().map(|a|convert(char::from_u32(*a).unwrap())).collect::<Vec<Class>>());
-            panic!();
+            if printing {
+                print!("\x1B[31;40mf\x1B[0m");
+                println!(
+                    "\nindex: {}\nMy answer:\n{:?}\nRight answer:\n{:?}\nMy Classes:\n{:?}",
+                    i + 1,
+                    my_answer,
+                    converted,
+                    just_codepoints
+                        .iter()
+                        .map(|a| convert(char::from_u32(*a).unwrap()))
+                        .collect::<Vec<Class>>()
+                );
+            }
+            printing = false;
         }
     }
-    println!("");
-    println!("{}/{} + {}", correct, total, skip_tests.len());
+    println!("\n{}/{} + {}", correct, total, skip_tests.len());
 }
 
 fn convert_for_testing(full: &str) -> Vec<(u32, Break)> {
