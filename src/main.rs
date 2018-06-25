@@ -5,6 +5,8 @@ use regex::Regex;
 
 use std::fs::File;
 use std::io::prelude::*;
+use std::char;
+
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 enum Class {
@@ -69,16 +71,21 @@ enum Break {
     Prohibited,
 }
 
-struct Splitter {
+use std::iter::Peekable;
+use std::str::Chars;
+
+struct SplitterIterator<'a> {
+    iter: Peekable<Chars<'a>>,
     ri_count: usize,
     class_before_spaces: Option<Class>,
     next_is_prohibited: bool,
     treat_next_n1_as: Option<Class>,
 }
 
-impl Splitter {
-    fn new() -> Splitter {
-        Splitter {
+impl<'a> SplitterIterator<'a> {
+    fn new(input: &'a str) -> SplitterIterator<'a> {
+        SplitterIterator {
+            iter: input.chars().peekable(),
             ri_count: 0,
             class_before_spaces: None,
             next_is_prohibited: false,
@@ -332,41 +339,26 @@ impl Splitter {
     }
 }
 
-struct PrintInfo {
-    splitter: Splitter,
-    codepoints: Vec<u32>,
-}
-
-use std::char;
-
-impl PrintInfo {
-    fn new(codepoints: Vec<u32>) -> PrintInfo {
-        PrintInfo {
-            splitter: Splitter::new(),
-            codepoints,
-        }
-    }
-
-    fn get_full_string(&mut self) -> Vec<(u32, Break)> {
-        let mut out: Vec<(u32, Break)> = Vec::new();
-        for i in 0..(self.codepoints.len() - 1) {
-            let current_codepoint = self.codepoints[i];
-            let br = self.splitter.get_split(
-                class(char::from_u32(current_codepoint).unwrap()),
-                class(char::from_u32(self.codepoints[i + 1]).unwrap()),
-            );
-            out.push((current_codepoint, br));
-        }
-        // Handle the last codepoint manually
-        let current_codepoint = self.codepoints[self.codepoints.len() - 1];
-        out.push((current_codepoint, Break::Opportunity));
-        out
+impl<'a> Iterator for SplitterIterator<'a> {
+    type Item = (u32, Break);
+    fn next(&mut self) -> Option<Self::Item> {
+        let tuple = match (self.iter.next(), self.iter.peek().clone()) {
+            (Some(a), Some(&b)) => (a as u32, self.get_split(class(a), class(b))),
+            (None, Some(_)) => unreachable!(),
+            (Some(a), None) => (a as u32, Break::Opportunity),
+            (None, None) => {
+                return None;
+            }
+        };
+        Some(tuple)
     }
 }
+
 
 fn get_breaks(codepoints: Vec<u32>) -> Vec<(u32, Break)> {
-    let mut p = PrintInfo::new(codepoints);
-    p.get_full_string()
+    let input_string: String = codepoints.iter().map(|i|char::from_u32(*i).unwrap()).collect();
+    let si = SplitterIterator::new(&input_string);
+    si.collect()
 }
 
 fn test() {
