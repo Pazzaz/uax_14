@@ -1,15 +1,9 @@
 #![feature(exclusive_range_pattern)]
-extern crate regex;
 
-use regex::Regex;
-
-use std::fs::File;
-use std::io::prelude::*;
 use std::char;
 
-
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-enum Class {
+pub enum Class {
     // Non-tailorable Line Breaking Classes
     BK, // Mandatory Break
     CR, // Carriage Return
@@ -65,7 +59,7 @@ enum Class {
 }
 
 #[derive(Debug, PartialEq)]
-enum Break {
+pub enum Break {
     Mandatory,
     Opportunity,
     Prohibited,
@@ -74,7 +68,7 @@ enum Break {
 use std::iter::Peekable;
 use std::str::Chars;
 
-struct SplitterIterator<'a> {
+pub struct BreakInfo<'a> {
     iter: Peekable<Chars<'a>>,
     ri_count: usize,
     class_before_spaces: Option<Class>,
@@ -82,9 +76,9 @@ struct SplitterIterator<'a> {
     treat_next_n1_as: Option<Class>,
 }
 
-impl<'a> SplitterIterator<'a> {
-    fn new(input: &'a str) -> SplitterIterator<'a> {
-        SplitterIterator {
+impl<'a> BreakInfo<'a> {
+    pub fn new(input: &'a str) -> BreakInfo<'a> {
+        BreakInfo {
             iter: input.chars().peekable(),
             ri_count: 0,
             class_before_spaces: None,
@@ -122,7 +116,7 @@ impl<'a> SplitterIterator<'a> {
         if n1 != Class::SP && n2 == Class::SP {
             self.class_before_spaces = Some(n1);
         }
-        
+
         // LB10
         if n1 == Class::CM {
             n1 = Class::AL;
@@ -343,13 +337,13 @@ impl<'a> SplitterIterator<'a> {
     }
 }
 
-impl<'a> Iterator for SplitterIterator<'a> {
-    type Item = (u32, Break);
+impl<'a> Iterator for BreakInfo<'a> {
+    type Item = (char, Break);
     fn next(&mut self) -> Option<Self::Item> {
         let tuple = match (self.iter.next(), self.iter.peek().clone()) {
-            (Some(a), Some(&b)) => (a as u32, self.get_split(class(a), class(b))),
+            (Some(a), Some(&b)) => (a, self.get_split(class(a), class(b))),
             (None, Some(_)) => unreachable!(),
-            (Some(a), None) => (a as u32, Break::Opportunity),
+            (Some(a), None) => (a, Break::Opportunity),
             (None, None) => {
                 return None;
             }
@@ -358,84 +352,7 @@ impl<'a> Iterator for SplitterIterator<'a> {
     }
 }
 
-
-fn get_breaks(codepoints: Vec<u32>) -> Vec<(u32, Break)> {
-    let input_string: String = codepoints.iter().map(|i|char::from_u32(*i).unwrap()).collect();
-    let si = SplitterIterator::new(&input_string);
-    si.collect()
-}
-
-fn test() {
-    let re = Regex::new(r"×(( [0-9A-F]+ [÷×])+)").unwrap();
-    let mut all_lines = String::new();
-    let mut f = File::open(r"C:\Users\Pontus\Documents\uax-14\test.txt").unwrap();
-    f.read_to_string(&mut all_lines).unwrap();
-    let mut correct = 0;
-    let mut total = 0;
-    // LB25 Disagrees with these tests
-    let skip_tests = [
-        1113, 1115, 1117, 1119, 1281, 1283, 1285, 1287, 2953, 2955, 4469, 4471, 4637, 4639, 5137,
-        5139, 7109, 7118, 7123, 7208, 7209, 7210, 7211, 7212, 7213, 7215, 7216, 7217, 7218, 7219,
-    ];
-    let mut printing = true;
-    for (i, caps) in re.captures_iter(&all_lines).enumerate() {
-        if skip_tests.contains(&(i + 1)) {
-            if printing {
-                print!(".");
-            }
-            continue;
-        }
-        total += 1;
-        let parts = caps.get(1).unwrap().as_str();
-        let converted = convert_for_testing(parts);
-        let just_codepoints: Vec<u32> = converted.iter().map(|(a, _)| *a).collect();
-        let my_answer = get_breaks(just_codepoints.clone());
-        if my_answer == converted {
-            correct += 1;
-            if printing {
-                print!("i");
-            }
-        } else {
-            if printing {
-                print!("\x1B[31;40mf\x1B[0m");
-                println!(
-                    "\nindex: {}\nMy answer:\n{:?}\nRight answer:\n{:?}\nMy Classes:\n{:?}",
-                    i + 1,
-                    my_answer,
-                    converted,
-                    just_codepoints
-                        .iter()
-                        .map(|a| class(char::from_u32(*a).unwrap()))
-                        .collect::<Vec<Class>>()
-                );
-            }
-            printing = false;
-        }
-    }
-    println!("\n{}/{} ({} ignored)", correct, total, skip_tests.len());
-}
-
-fn convert_for_testing(full: &str) -> Vec<(u32, Break)> {
-    let mut out: Vec<(u32, Break)> = Vec::new();
-    let re = Regex::new(r"([0-9A-F]+) ([÷×])").unwrap();
-    for caps in re.captures_iter(full) {
-        let number_str = caps.get(1).unwrap().as_str();
-        let number = u32::from_str_radix(number_str, 16).expect("Failed to parse");
-        let br = match caps.get(2).unwrap().as_str() {
-            "÷" => Break::Opportunity,
-            "×" => Break::Prohibited,
-            _ => panic!(),
-        };
-        out.push((number, br));
-    }
-    out
-}
-
-fn main() {
-    test();
-}
-
-fn class(n: char) -> Class {
+pub fn class(n: char) -> Class {
     match n as u32 {
         0x200D => Class::ZWJ,
         0x11A8..=0x11FF | 0xD7CB..=0xD7FB => Class::JT,

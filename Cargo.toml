@@ -5,3 +5,7 @@ authors = ["Pazzaz <pazzaz.sundqvist@gmail.com>"]
 
 [dependencies]
 regex = "1.0.0"
+
+[[test]]
+name = "full"
+harness = false
