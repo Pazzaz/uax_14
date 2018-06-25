@@ -98,16 +98,17 @@ impl Splitter {
             }
             self.treat_next_n1_as = None;
         }
-        // When an RI is the first character
+        // LB30a uses the amount of RI in a row to determine if breaks are allowed
+        // Special case when RI is the first character
         if self.ri_count == 0 && n1 == Class::RI {
-            self.ri_count += 1;
+            self.ri_count = 1;
         }
-
         if n2 == Class::RI {
             self.ri_count += 1;
         } else {
             self.ri_count = 0;
         }
+
         // LB8, LB14, LB15, LB16, LB17 all need to keep track of characters before spaces.
         if n1 != Class::SP && n2 == Class::SP {
             self.class_before_spaces = Some(n1);
@@ -149,9 +150,6 @@ impl Splitter {
                 self.treat_next_n1_as = Some(n1);
                 Break::Prohibited
             }
-
-            // LB10
-            // Done before match statement
 
             // LB11
             (_, Class::WJ) | (Class::WJ, _) => Break::Prohibited,
@@ -354,8 +352,8 @@ impl PrintInfo {
         for i in 0..(self.codepoints.len() - 1) {
             let current_codepoint = self.codepoints[i];
             let br = self.splitter.get_split(
-                convert(char::from_u32(current_codepoint).unwrap()),
-                convert(char::from_u32(self.codepoints[i + 1]).unwrap()),
+                class(char::from_u32(current_codepoint).unwrap()),
+                class(char::from_u32(self.codepoints[i + 1]).unwrap()),
             );
             out.push((current_codepoint, br));
         }
@@ -378,11 +376,10 @@ fn test() {
     f.read_to_string(&mut all_lines).unwrap();
     let mut correct = 0;
     let mut total = 0;
+    // LB25 Disagrees with these tests
     let skip_tests = [
-        // LB25 Disagrees with these tests
-        1113, 1115, 1117, 1119, 1281, 1283, 1285, 1287,
-        2953, 2955, 4469, 4471, 4637, 4639, 5137, 5139, 7109, 7118, 7123, 7208, 7209, 7210, 7211,
-        7212, 7213, 7215, 7216, 7217, 7218, 7219,
+        1113, 1115, 1117, 1119, 1281, 1283, 1285, 1287, 2953, 2955, 4469, 4471, 4637, 4639, 5137,
+        5139, 7109, 7118, 7123, 7208, 7209, 7210, 7211, 7212, 7213, 7215, 7216, 7217, 7218, 7219,
     ];
     let mut printing = true;
     for (i, caps) in re.captures_iter(&all_lines).enumerate() {
@@ -412,7 +409,7 @@ fn test() {
                     converted,
                     just_codepoints
                         .iter()
-                        .map(|a| convert(char::from_u32(*a).unwrap()))
+                        .map(|a| class(char::from_u32(*a).unwrap()))
                         .collect::<Vec<Class>>()
                 );
             }
@@ -442,7 +439,7 @@ fn main() {
     test();
 }
 
-fn convert(n: char) -> Class {
+fn class(n: char) -> Class {
     match n as u32 {
         0x200D => Class::ZWJ,
         0x11A8..=0x11FF | 0xD7CB..=0xD7FB => Class::JT,
