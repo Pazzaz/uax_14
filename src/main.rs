@@ -105,7 +105,9 @@ impl<'a> SplitterIterator<'a> {
             }
             self.treat_next_n1_as = None;
         }
+
         // LB30a uses the amount of RI in a row to determine if breaks are allowed
+
         // Special case when RI is the first character
         if self.ri_count == 0 && n1 == Class::RI {
             self.ri_count = 1;
@@ -120,10 +122,12 @@ impl<'a> SplitterIterator<'a> {
         if n1 != Class::SP && n2 == Class::SP {
             self.class_before_spaces = Some(n1);
         }
+        
         // LB10
         if n1 == Class::CM {
             n1 = Class::AL;
         }
+
         let mut b = match (n1, n2) {
             // LB4
             (Class::BK, _) => Break::Mandatory,
@@ -408,7 +412,7 @@ fn test() {
             printing = false;
         }
     }
-    println!("\n{}/{} + {}", correct, total, skip_tests.len());
+    println!("\n{}/{} ({} ignored)", correct, total, skip_tests.len());
 }
 
 fn convert_for_testing(full: &str) -> Vec<(u32, Break)> {
