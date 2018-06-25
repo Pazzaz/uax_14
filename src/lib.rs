@@ -353,6 +353,7 @@ impl<'a> Iterator for BreakInfo<'a> {
     }
 }
 
+// Automatically generated from the code in `../generate`
 pub fn class(n: char) -> Class {
     match n as u32 {
         0x000D => Class::CR,
