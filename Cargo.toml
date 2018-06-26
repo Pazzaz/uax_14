@@ -2,8 +2,12 @@
 name = "uax-14"
 version = "0.1.0"
 authors = ["Pazzaz <pazzaz.sundqvist@gmail.com>"]
+build = "build.rs"
 
 [dependencies]
+regex = "1.0.0"
+
+[build-dependencies]
 regex = "1.0.0"
 
 [[test]]

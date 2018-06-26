@@ -1,7 +1,0 @@
-[package]
-name = "generate"
-version = "0.1.0"
-authors = ["Pazzaz <pazzaz.sundqvist@gmail.com>"]
-
-[dependencies]
-regex = "1.0.0"
