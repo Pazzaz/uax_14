@@ -62,18 +62,15 @@ pub fn convert_to_break_class(n: char) -> Class {{match n as u32 {{");
         }
     }
     println!(
-        "not_covered => match not_covered {{
-            0x3400..=0x4DBF  // CJK Unified Ideographs Extension A
-            | 0x4E00..=0x9FFF // CJK Unified Ideographs
-            | 0xF900..=0xFAFF // CJK Compatibility Ideographs
-            | 0x20000..=0x2FFFD // Plane 2
-            | 0x30000..=0x3FFFD // Plane 3
-            | 0x1F000..=0x1FFFD // Plane 1 range
-            => Class::ID,
-            0x20A0..=0x20CF // Currency Symbols
-            => Class::PR,
-            _ => Class::AL // Actually XX
-        }},
+        "0x3400..=0x4DBF  // CJK Unified Ideographs Extension A
+        | 0x4E00..=0x9FFF // CJK Unified Ideographs
+        | 0xF900..=0xFAFF // CJK Compatibility Ideographs
+        | 0x20000..=0x2FFFD // Plane 2
+        | 0x1F000..=0x1FFFD // Plane 1 range
+        => Class::ID,
+        0x20A0..=0x20CF // Currency Symbols
+        => Class::PR,
+        _ => Class::AL // Actually XX
     }}
 }}"
     );
