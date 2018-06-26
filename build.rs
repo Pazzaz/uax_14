@@ -50,7 +50,7 @@ fn main() {
         let class = caps.get(5).unwrap().as_str();
         hash.entry(class).or_insert(Vec::new()).push(numbers);
     }
-    f.write_all(b"pub fn convert_to_break_class(n: char) -> Class {match n as u32 {").unwrap();
+    f.write_all(b"match n as u32 {").unwrap();
     for (key, value) in hash.into_iter().map(|(key, list)|(key, squish(list))) {
         match key {
             "SA" => f.write_all(format!(
@@ -70,8 +70,7 @@ fn main() {
         0x20A0...0x20CF // Currency Symbols
         => Class::PR,
         _ => Class::AL // Actually XX
-    }}
-}}"
+    }}"
     ).as_bytes()).unwrap();
 }
 
