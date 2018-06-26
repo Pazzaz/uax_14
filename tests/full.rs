@@ -2,7 +2,7 @@ extern crate regex;
 extern crate uax_14;
 use regex::Regex;
 use std::char;
-use uax_14::{class, Break, BreakInfo, Class};
+use uax_14::{convert_to_break_class, Break, BreakInfo, Class};
 
 // LB25 Disagrees with these tests
 const SKIP_TESTS: [usize; 30] = [
@@ -45,8 +45,15 @@ fn main() {
             .iter()
             .map(|i| char::from_u32(*i).unwrap())
             .collect();
-        let si = BreakInfo::new(&input_string);
-        let my_answer: Vec<(u32, Break)> = si.map(|(a, b)| (a as u32, b)).collect();
+        let my_answer: Vec<(u32, Break)> = BreakInfo::new(&input_string)
+            .map(|(a, b)| {
+                if b == Break::Mandatory {
+                    (a as u32, Break::Opportunity)
+                } else {
+                    (a as u32, b)
+                }
+            })
+            .collect();
         if my_answer == converted {
             correct += 1;
             if printing {
@@ -62,7 +69,7 @@ fn main() {
                     converted,
                     just_codepoints
                         .iter()
-                        .map(|a| class(char::from_u32(*a).unwrap()))
+                        .map(|a| convert_to_break_class(char::from_u32(*a).unwrap()))
                         .collect::<Vec<Class>>()
                 );
             }

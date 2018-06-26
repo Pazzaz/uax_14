@@ -40,7 +40,14 @@ fn main() {
         let class = caps.get(5).unwrap().as_str();
         hash.entry(class).or_insert(Vec::new()).push(numbers);
     }
-    println!("match n as u32 {{");
+    println!("// Automatically generated from the code in `../generate`
+use Class;
+/// Converts a `char` to its corresponding [Line Breaking Class].
+///
+/// For more information see [`Class`].
+///
+/// [Line Breaking Class]: https://www.unicode.org/reports/tr14/#Table1
+pub fn convert_to_break_class(n: char) -> Class {{match n as u32 {{");
     for (key, value) in hash {
         match key {
             "SA" => println!(
@@ -67,7 +74,8 @@ fn main() {
             => Class::PR,
             _ => Class::AL // Actually XX
         }},
-    }}"
+    }}
+}}"
     );
 }
 
