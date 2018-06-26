@@ -1,5 +1,3 @@
-// Could be removed but makes generating the large match statement much easier.
-#![feature(exclusive_range_pattern)]
 //! An implementation of [UAX #14], also called the `Unicode Line Breaking
 //! Algorithm`.
 //!
