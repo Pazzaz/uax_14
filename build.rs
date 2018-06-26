@@ -8,9 +8,6 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
-// These are not included in the repository and has to be downloaded seperately
-// https://www.unicode.org/Public/UCD/latest/ucd/LineBreak.txt
-// http://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt
 const LINEBREAK: &'static str = include_str!("LineBreak-11.0.0.txt");
 const UNICODEDATA: &'static str = include_str!("UnicodeData.txt");
 
