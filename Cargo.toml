@@ -1,5 +1,5 @@
 [package]
-name = "uax-14"
+name = "uax_14"
 version = "0.1.0"
 authors = ["Pazzaz <pazzaz.sundqvist@gmail.com>"]
 build = "build.rs"
