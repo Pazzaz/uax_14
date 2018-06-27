@@ -20,7 +20,7 @@ pub fn convert_to_break_class(n: char) -> Class {
 ///
 /// Interacting directly with Line Breaking Classes is usually not neccessary
 /// unless you want to implement something similar to [`LineBreaks`].
-/// 
+///
 /// For converting `char` to `Class`, see [`convert_to_break_class`].
 ///
 /// Some classes are missing because of [LB1]. These are [SG] (invalid in any
@@ -154,12 +154,15 @@ impl<'a> LineBreaks<'a> {
         }
     }
 
+    // Specifies if a break is allowed between two Line Breaking Classes, n1 and n2. Some properties of previous characters are needed for some rules but that information is stored in `self`. For a list of all rules, see https://www.unicode.org/reports/tr14/#Algorithm.
     fn get_break(&mut self, mut n1: Class, n2: Class) -> Break {
+        // LB21a
         if self.next_is_prohibited {
             self.next_is_prohibited = false;
             return Break::Prohibited;
         }
 
+        // LB9
         if let Some(c) = self.treat_next_n1_as {
             if c != Class::ZWJ {
                 n1 = c;
@@ -311,7 +314,7 @@ impl<'a> LineBreaks<'a> {
             | (Class::EB, Class::PO)
             | (Class::EM, Class::PO) => Break::Prohibited,
 
-            // LB24 - regexp thing not implemented
+            // LB24 - advanced part not implemented, using LB25 instead
             (Class::PR, Class::AL)
             | (Class::PR, Class::HL)
             | (Class::PO, Class::AL)
@@ -321,7 +324,7 @@ impl<'a> LineBreaks<'a> {
             | (Class::HL, Class::PR)
             | (Class::HL, Class::PO) => Break::Prohibited,
 
-            //LB25
+            // LB25
             (Class::CL, Class::PO)
             | (Class::CP, Class::PO)
             | (Class::CL, Class::PR)

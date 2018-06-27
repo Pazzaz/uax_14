@@ -2,7 +2,7 @@ extern crate regex;
 extern crate uax_14;
 use regex::Regex;
 use std::char;
-use uax_14::{convert_to_break_class, Break, LineBreaks, Class};
+use uax_14::{convert_to_break_class, Break, Class, LineBreaks};
 
 // LB25 Disagrees with these tests
 const SKIP_TESTS: [usize; 30] = [
