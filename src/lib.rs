@@ -19,10 +19,13 @@ pub fn convert_to_break_class(n: char) -> Class {
 /// A [Line Breaking Class].
 ///
 /// Interacting directly with Line Breaking Classes is usually not neccessary
-/// unless you want to implement something similar to [`BreakInfo`]. Missing
-/// here are [SG] (invalid in any input), [SA] (treated as [CM] or [AL]
-/// depending on its General Category), [CJ] (treated as [NS]), [XX], [SG] and
-/// [AI] (all treated as [AL]). For more information see [LB1].
+/// unless you want to implement something similar to [`BreakInfo`].
+/// 
+/// For converting `char` to `Class`, see [`convert_to_break_class`].
+///
+/// Some classes are missing because of [LB1]. These are [SG] (invalid in any
+/// input), [SA] (treated as [CM] or [AL] depending on its General Category),
+/// [CJ] (treated as [NS]), [XX], [SG] and [AI] (all treated as [AL]).
 ///
 /// [SG]: https://www.unicode.org/reports/tr14/#SG
 /// [SA]: https://www.unicode.org/reports/tr14/#SA
@@ -92,7 +95,7 @@ pub enum Class {
     XX, // Unknown
 }
 
-/// Used to specify whether a break is allowed or not.
+/// Used by [`BreakInfo`] to specify whether a break is allowed or not.
 ///
 /// `Mandatory` is where it is expected to be a line break, `Opportunity` is
 /// where it is allowed to be a line break and `Prohibited` is where a line
