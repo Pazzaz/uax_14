@@ -2,7 +2,7 @@ extern crate regex;
 extern crate uax_14;
 use regex::Regex;
 use std::char;
-use uax_14::{convert_to_break_class, Break, BreakInfo, Class};
+use uax_14::{convert_to_break_class, Break, LineBreaks, Class};
 
 // LB25 Disagrees with these tests
 const SKIP_TESTS: [usize; 30] = [
@@ -45,7 +45,7 @@ fn main() {
             .iter()
             .map(|i| char::from_u32(*i).unwrap())
             .collect();
-        let my_answer: Vec<(u32, Break)> = BreakInfo::new(&input_string)
+        let my_answer: Vec<(u32, Break)> = LineBreaks::new(&input_string)
             .map(|(a, b)| {
                 if b == Break::Mandatory {
                     (a as u32, Break::Opportunity)

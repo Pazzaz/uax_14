@@ -19,7 +19,7 @@ pub fn convert_to_break_class(n: char) -> Class {
 /// A [Line Breaking Class].
 ///
 /// Interacting directly with Line Breaking Classes is usually not neccessary
-/// unless you want to implement something similar to [`BreakInfo`].
+/// unless you want to implement something similar to [`LineBreaks`].
 /// 
 /// For converting `char` to `Class`, see [`convert_to_break_class`].
 ///
@@ -95,7 +95,7 @@ pub enum Class {
     XX, // Unknown
 }
 
-/// Used by [`BreakInfo`] to specify whether a break is allowed or not.
+/// Used by [`LineBreaks`] to specify whether a break is allowed or not.
 ///
 /// `Mandatory` is where it is expected to be a line break, `Opportunity` is
 /// where it is allowed to be a line break and `Prohibited` is where a line
@@ -117,11 +117,11 @@ pub enum Break {
 /// # Examples
 ///
 /// ```
-/// use uax_14::{Break, BreakInfo};
+/// use uax_14::{Break, LineBreaks};
 ///
 /// let input = "Which is tree? 木禾夫🤔";
 /// let mut split_input = String::new();
-/// for (c, br) in BreakInfo::new(&input) {
+/// for (c, br) in LineBreaks::new(&input) {
 ///     split_input.push(c);
 ///     if br == Break::Mandatory || br == Break::Opportunity {
 ///         split_input.push('\n');
@@ -133,7 +133,7 @@ pub enum Break {
 ///     ["Which ", "is ", "tree? ", "木", "禾", "夫", "🤔", ""]
 /// );
 /// ```
-pub struct BreakInfo<'a> {
+pub struct LineBreaks<'a> {
     iter: Peekable<Chars<'a>>,
     ri_count: usize,
     class_before_spaces: Option<Class>,
@@ -141,11 +141,11 @@ pub struct BreakInfo<'a> {
     treat_next_n1_as: Option<Class>,
 }
 
-/// Construct a `BreakInfo` from a `&str`.
-impl<'a> BreakInfo<'a> {
+/// Construct a `LineBreaks` from a `&str`.
+impl<'a> LineBreaks<'a> {
     #[inline]
-    pub fn new(input: &'a str) -> BreakInfo<'a> {
-        BreakInfo {
+    pub fn new(input: &'a str) -> LineBreaks<'a> {
+        LineBreaks {
             iter: input.chars().peekable(),
             ri_count: 0,
             class_before_spaces: None,
@@ -402,7 +402,7 @@ impl<'a> BreakInfo<'a> {
 }
 /// Provide information as to whether a line break can be appended for each
 /// `char` in the input.
-impl<'a> Iterator for BreakInfo<'a> {
+impl<'a> Iterator for LineBreaks<'a> {
     type Item = (char, Break);
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
