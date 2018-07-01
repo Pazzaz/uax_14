@@ -49,7 +49,7 @@ fn main() {
             .iter()
             .map(|i| char::from_u32(*i).unwrap())
             .collect();
-        let my_answer: Vec<usize> = char_line_breaks(&input_string);
+        let my_answer: Vec<usize> = char_line_breaks(&input_string).iter().map(|x| x.0).collect();
         if my_answer == indices {
             correct += 1;
             if printing {

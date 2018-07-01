@@ -144,6 +144,13 @@ fn format_codepoints(lower: u32, higher: Option<u32>) -> String {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum Break {
+    Mandatory,
+    Opportunity,
+    Prohibited,
+}
+
 const NUM_OF_CLASSES: usize = 39;
 
 fn write_states(f: &mut File) {
@@ -196,13 +203,13 @@ fn write_states(f: &mut File) {
     const LB30A_EVEN_STATE: usize = NUM_OF_CLASSES + 8;
     const LB9_EXCEPTIONS: [usize; 8] = [BK, CR, LF, NL, SP, ZW, ZWJ, 39];
 
-    fn break_before(class: usize, b: bool, states: &mut Vec<[(usize, bool); NUM_OF_CLASSES]>) {
+    fn break_before(class: usize, b: Break, states: &mut Vec<[(usize, Break); NUM_OF_CLASSES]>) {
         for state in states.iter_mut() {
             state[class].1 = b;
         }
     }
 
-    fn break_after(state: usize, b: bool, states: &mut Vec<[(usize, bool); NUM_OF_CLASSES]>) {
+    fn break_after(state: usize, b: Break, states: &mut Vec<[(usize, Break); NUM_OF_CLASSES]>) {
         for c in states[state].iter_mut() {
             c.1 = b;
         }
@@ -211,56 +218,56 @@ fn write_states(f: &mut File) {
     fn not_allowed_between(
         c1: usize,
         c2: usize,
-        states: &mut Vec<[(usize, bool); NUM_OF_CLASSES]>,
+        states: &mut Vec<[(usize, Break); NUM_OF_CLASSES]>,
     ) {
-        states[c1][c2].1 = false;
+        states[c1][c2].1 = Break::Prohibited;
     }
 
     const LB12A_EXCEPTIONS: [usize; 3] = [SP, BA, HY];
-    let mut states = Vec::new();
-    let mut extra_states = Vec::new();
+    let mut states: Vec<[(usize, Break); NUM_OF_CLASSES]> = Vec::new();
+    let mut extra_states: Vec<[(usize, Break); NUM_OF_CLASSES]> = Vec::new();
 
     for _ in 0..(NUM_OF_CLASSES + 1) {
         states.push([
-            (0, true),
-            (1, true),
-            (2, true),
-            (3, true),
-            (4, true),
-            (5, true),
-            (6, true),
-            (7, true),
-            (8, true),
-            (9, true),
-            (10, true),
-            (11, true),
-            (12, true),
-            (13, true),
-            (14, true),
-            (15, true),
-            (16, true),
-            (17, true),
-            (18, true),
-            (19, true),
-            (20, true),
-            (21, true),
-            (22, true),
-            (23, true),
-            (24, true),
-            (25, true),
-            (26, true),
-            (27, true),
-            (28, true),
-            (29, true),
-            (30, true),
-            (31, true),
-            (32, true),
-            (33, true),
-            (34, true),
-            (35, true),
-            (36, true),
-            (37, true),
-            (38, true),
+            (0, Break::Opportunity),
+            (1, Break::Opportunity),
+            (2, Break::Opportunity),
+            (3, Break::Opportunity),
+            (4, Break::Opportunity),
+            (5, Break::Opportunity),
+            (6, Break::Opportunity),
+            (7, Break::Opportunity),
+            (8, Break::Opportunity),
+            (9, Break::Opportunity),
+            (10, Break::Opportunity),
+            (11, Break::Opportunity),
+            (12, Break::Opportunity),
+            (13, Break::Opportunity),
+            (14, Break::Opportunity),
+            (15, Break::Opportunity),
+            (16, Break::Opportunity),
+            (17, Break::Opportunity),
+            (18, Break::Opportunity),
+            (19, Break::Opportunity),
+            (20, Break::Opportunity),
+            (21, Break::Opportunity),
+            (22, Break::Opportunity),
+            (23, Break::Opportunity),
+            (24, Break::Opportunity),
+            (25, Break::Opportunity),
+            (26, Break::Opportunity),
+            (27, Break::Opportunity),
+            (28, Break::Opportunity),
+            (29, Break::Opportunity),
+            (30, Break::Opportunity),
+            (31, Break::Opportunity),
+            (32, Break::Opportunity),
+            (33, Break::Opportunity),
+            (34, Break::Opportunity),
+            (35, Break::Opportunity),
+            (36, Break::Opportunity),
+            (37, Break::Opportunity),
+            (38, Break::Opportunity),
         ]);
     }
 
@@ -381,25 +388,25 @@ fn write_states(f: &mut File) {
     states[HL][BA].0 = LB21A_BA_STATE;
 
     // LB21
-    break_before(BA, false, &mut states);
-    break_before(HY, false, &mut states);
-    break_before(NS, false, &mut states);
-    break_after(BB, false, &mut states);
+    break_before(BA, Break::Prohibited, &mut states);
+    break_before(HY, Break::Prohibited, &mut states);
+    break_before(NS, Break::Prohibited, &mut states);
+    break_after(BB, Break::Prohibited, &mut states);
 
     // LB20
-    break_before(CB, true, &mut states);
-    break_after(CB, true, &mut states);
+    break_before(CB, Break::Opportunity, &mut states);
+    break_after(CB, Break::Opportunity, &mut states);
 
     // LB19
-    break_before(QU, false, &mut states);
-    break_after(QU, false, &mut states);
+    break_before(QU, Break::Prohibited, &mut states);
+    break_after(QU, Break::Prohibited, &mut states);
 
     // LB18
-    break_after(SP, true, &mut states);
+    break_after(SP, Break::Opportunity, &mut states);
 
     // LB17
     not_allowed_between(B2, B2, &mut states);
-    states[B2][B2].1 = false;
+    states[B2][B2].1 = Break::Prohibited;
     states[B2][SP].0 = LB17_STATE;
 
     // LB16
@@ -410,19 +417,19 @@ fn write_states(f: &mut File) {
     states[CP][SP].0 = LB16_STATE;
 
     // LB15
-    states[QU][OP].1 = false;
+    states[QU][OP].1 = Break::Prohibited;
     states[QU][SP].0 = LB15_STATE;
 
     // LB14
-    break_after(OP, false, &mut states);
+    break_after(OP, Break::Prohibited, &mut states);
     states[OP][SP].0 = LB14_STATE;
 
     // LB13
-    break_before(CL, false, &mut states);
-    break_before(CP, false, &mut states);
-    break_before(EX, false, &mut states);
-    break_before(IS, false, &mut states);
-    break_before(SY, false, &mut states);
+    break_before(CL, Break::Prohibited, &mut states);
+    break_before(CP, Break::Prohibited, &mut states);
+    break_before(EX, Break::Prohibited, &mut states);
+    break_before(IS, Break::Prohibited, &mut states);
+    break_before(SY, Break::Prohibited, &mut states);
 
     // LB12a
     for state in states.iter_mut().enumerate().filter_map(|(index, state)| {
@@ -432,19 +439,19 @@ fn write_states(f: &mut File) {
             Some(state)
         }
     }) {
-        state[GL].1 = false;
+        state[GL].1 = Break::Prohibited;
     }
 
     // LB12
-    break_after(GL, false, &mut states);
+    break_after(GL, Break::Prohibited, &mut states);
 
     // LB11
-    break_after(WJ, false, &mut states);
-    break_before(WJ, false, &mut states);
+    break_after(WJ, Break::Prohibited, &mut states);
+    break_before(WJ, Break::Prohibited, &mut states);
 
     // LB10
-    states[AL][CM].1 = false;
-    states[AL][ZWJ].1 = false;
+    states[AL][CM].1 = Break::Prohibited;
+    states[AL][ZWJ].1 = Break::Prohibited;
 
     states[CM] = states[AL];
     states[ZWJ] = states[AL];
@@ -457,38 +464,38 @@ fn write_states(f: &mut File) {
             Some((index, state))
         }
     }) {
-        state[CM] = (i, false);
-        state[ZWJ] = (i, false);
+        state[CM] = (i, Break::Prohibited);
+        state[ZWJ] = (i, Break::Prohibited);
     }
 
     // LB8a
-    break_after(ZWJ, false, &mut states);
+    break_after(ZWJ, Break::Prohibited, &mut states);
 
     // LB8
-    break_after(ZW, true, &mut states);
+    break_after(ZW, Break::Opportunity, &mut states);
     states[ZW][SP].0 = LB8_STATE;
 
     // LB7
-    break_before(SP, false, &mut states);
-    break_before(ZW, false, &mut states);
+    break_before(SP, Break::Prohibited, &mut states);
+    break_before(ZW, Break::Prohibited, &mut states);
 
     // LB6
-    break_before(BK, false, &mut states);
-    break_before(CR, false, &mut states);
-    break_before(LF, false, &mut states);
-    break_before(NL, false, &mut states);
+    break_before(BK, Break::Prohibited, &mut states);
+    break_before(CR, Break::Prohibited, &mut states);
+    break_before(LF, Break::Prohibited, &mut states);
+    break_before(NL, Break::Prohibited, &mut states);
 
     // LB5
-    break_after(CR, true, &mut states);
-    break_after(LF, true, &mut states);
-    break_after(NL, true, &mut states);
+    break_after(CR, Break::Mandatory, &mut states);
+    break_after(LF, Break::Mandatory, &mut states);
+    break_after(NL, Break::Mandatory, &mut states);
     not_allowed_between(CR, LF, &mut states);
 
     // LB4
-    break_after(BK, true, &mut states);
+    break_after(BK, Break::Mandatory, &mut states);
 
     // LB2
-    break_after(NUM_OF_CLASSES, false, &mut states);
+    break_after(NUM_OF_CLASSES, Break::Prohibited, &mut states);
 
     // Special extra states
 
@@ -501,55 +508,55 @@ fn write_states(f: &mut File) {
             Some(s)
         }
     }) {
-        part.1 = true;
+        part.1 = Break::Opportunity;
     }
     extra_states.push(new_state);
 
     // LB14
     let mut new_state = states[SP].clone();
     for part in new_state.iter_mut() {
-        part.1 = false;
+        part.1 = Break::Prohibited;
     }
     extra_states.push(new_state);
 
     // LB15
     let mut new_state = states[SP].clone();
-    new_state[OP].1 = false;
+    new_state[OP].1 = Break::Prohibited;
     extra_states.push(new_state);
 
     // LB16
     let mut new_state = states[SP].clone();
-    new_state[NS].1 = false;
+    new_state[NS].1 = Break::Prohibited;
     extra_states.push(new_state);
 
     // LB17
     let mut new_state = states[SP].clone();
-    new_state[B2].1 = false;
+    new_state[B2].1 = Break::Prohibited;
     extra_states.push(new_state);
 
     // LB21a
     let mut hy_state = states[HY].clone();
     for part in hy_state.iter_mut() {
-        part.1 = false;
+        part.1 = Break::Prohibited;
     }
     let mut ba_state = states[BA].clone();
     for part in ba_state.iter_mut() {
-        part.1 = false;
+        part.1 = Break::Prohibited;
     }
     extra_states.push(hy_state);
     extra_states.push(ba_state);
 
     // LB30a
     let mut even_state = states[RI].clone();
-    even_state[RI] = (RI, true);
+    even_state[RI] = (RI, Break::Opportunity);
     extra_states.push(even_state);
 
     states.extend(extra_states.into_iter());
-    write!(f, "const NUM_OF_CLASSES: usize = {};\nconst STATES: [[(usize, bool); NUM_OF_CLASSES]; {}] = [", NUM_OF_CLASSES, states.len()).unwrap();
+    write!(f, "const NUM_OF_CLASSES: usize = {};\nconst STATES: [[(usize, Break); NUM_OF_CLASSES]; {}] = [", NUM_OF_CLASSES, states.len()).unwrap();
     for state in states {
         write!(f, "[").unwrap();
         for value in state.iter() {
-            write!(f, "{:?},", value).unwrap();
+            write!(f, "({}, Break::{:?}),", value.0, value.1).unwrap();
         }
         write!(f, "],").unwrap();
     }

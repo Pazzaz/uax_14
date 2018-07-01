@@ -95,19 +95,19 @@ pub enum Class {
     XX = 38, // Unknown
 }
 
-include!(concat!(env!("OUT_DIR"), "/states"));
-
 /// Used by [`LineBreaks`] to specify whether a break is allowed or not.
 ///
 /// `Mandatory` is where it is expected to be a line break, `Opportunity` is
 /// where it is allowed to be a line break and `Prohibited` is where a line
 /// break isn't allowed.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Break {
     Mandatory,
     Opportunity,
     Prohibited,
 }
+
+include!(concat!(env!("OUT_DIR"), "/states"));
 
 /// An `Iterator` that provides information about possible line breaks in a
 /// `str`.
@@ -145,7 +145,7 @@ pub struct LineBreaks<'a> {
 ///
 /// This gives back indices that correspond to `char`s in the original input.
 /// So 0 is before the first `char`, 1 after the first `char` etc.
-pub fn char_line_breaks(input: &str) -> Vec<usize> {
+pub fn char_line_breaks(input: &str) -> Vec<(usize, Break)> {
     linebreaks(input, true)
 }
 
@@ -155,33 +155,33 @@ pub fn char_line_breaks(input: &str) -> Vec<usize> {
 /// This gives back indices that correspond to bytes in the original input. So
 /// 0 is before the first byte, 1 after the first byte etc. This is useful when
 /// you want to slice a `str` depending on where line breaks are allowed.
-pub fn byte_line_breaks(input: &str) -> Vec<usize> {
+pub fn byte_line_breaks(input: &str) -> Vec<(usize, Break)> {
     linebreaks(input, false)
 }
 
-fn linebreaks(input: &str, char_indices: bool) -> Vec<usize> {
+fn linebreaks(input: &str, char_indices: bool) -> Vec<(usize, Break)> {
     let mut current_state = NUM_OF_CLASSES;
     let mut len = 0;
-    let mut full: Vec<usize> = input
+    let mut full: Vec<(usize, Break)> = input
         .char_indices()
         .map(|(byte_index, ch)| (byte_index, convert_to_break_class(ch)))
         .enumerate()
         .filter_map(|(char_index, (byte_index, class))| {
-            let (new_state, break_allowed) = STATES[current_state][class as usize];
+            let (new_state, break_variant) = STATES[current_state][class as usize];
             current_state = new_state;
             len += 1;
-            if break_allowed {
-                if char_indices {
-                    Some(char_index)
-                } else {
-                    Some(byte_index)
-                }
-            } else {
+            if break_variant == Break::Prohibited {
                 None
+            } else {
+                if char_indices {
+                    Some((char_index, break_variant))
+                } else {
+                    Some((byte_index, break_variant))
+                }
             }
         })
         .collect();
-    full.push(len);
+    full.push((len, Break::Opportunity));
     full
 }
 
@@ -198,7 +198,7 @@ impl<'a> LineBreaks<'a> {
         out
     }
 
-    fn possible_break(&mut self, c: Class) -> bool {
+    fn possible_break(&mut self, c: Class) -> Break {
         let (new_state, br) = STATES[self.current_state][c as usize];
         self.current_state = new_state;
         br
@@ -212,14 +212,12 @@ impl<'a> Iterator for LineBreaks<'a> {
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         let tuple = match (self.iter.next(), self.iter.peek()) {
-            (Some(a), Some(&b)) => (
+            (Some(a), Some(&b)) => {
+                (
                 a,
-                if self.possible_break(convert_to_break_class(b)) {
-                    Break::Opportunity
-                } else {
-                    Break::Prohibited
-                },
-            ),
+                self.possible_break(convert_to_break_class(b)),
+            )
+            },
             (None, Some(_)) => unreachable!(),
             (Some(a), None) => (a, Break::Opportunity),
             (None, None) => {
