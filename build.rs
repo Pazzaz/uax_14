@@ -79,6 +79,10 @@ fn main() {
         f,
         "0x1F000...0x1FFFD => Class::ID, 0x20A0...0x20CF => Class::PR, _ => Class::AL}}"
     ).unwrap();
+
+    let dest_path = Path::new(&out_dir).join("states");
+    let mut f = File::create(&dest_path).unwrap();
+    write_states(&mut f);
 }
 
 // Convert a list of codepoints / ranges of codepoints into a list with the
@@ -140,377 +144,414 @@ fn format_codepoints(lower: u32, higher: Option<u32>) -> String {
     }
 }
 
-// TODO: Incorporate into build script
-// GENERATING STATES
-// const LB8_STATE: usize = NUM_OF_CLASSES + 1;
-// const LB14_STATE: usize = NUM_OF_CLASSES + 2;
-// const LB15_STATE: usize = NUM_OF_CLASSES + 3;
-// const LB16_STATE: usize = NUM_OF_CLASSES + 4;
-// const LB17_STATE: usize = NUM_OF_CLASSES + 5;
-// const LB21A_HY_STATE: usize = NUM_OF_CLASSES + 6;
-// const LB21A_BA_STATE: usize = NUM_OF_CLASSES + 7;
-// const LB30A_EVEN_STATE: usize = NUM_OF_CLASSES + 8;
-// const LB9_EXCEPTIONS: [usize; 8] = [
-//     Class::BK as usize,
-//     Class::CR as usize,
-//     Class::LF as usize,
-//     Class::NL as usize,
-//     Class::SP as usize,
-//     Class::ZW as usize,
-//     Class::ZWJ as usize,
-//     39,
-// ];
+const NUM_OF_CLASSES: usize = 39;
 
-// fn break_before(class: Class, b: bool, states: &mut Vec<[(usize, bool);
-// NUM_OF_CLASSES]>) {     for state in states.iter_mut() {
-//         state[class as usize].1 = b;
-//     }
-// }
+fn write_states(f: &mut File) {
+    const BK: usize = 0;
+    const CR: usize = 1;
+    const LF: usize = 2;
+    const CM: usize = 3;
+    const NL: usize = 4;
+    const WJ: usize = 5;
+    const ZW: usize = 6;
+    const GL: usize = 7;
+    const SP: usize = 8;
+    const ZWJ: usize = 9;
+    const B2: usize = 10;
+    const BA: usize = 11;
+    const BB: usize = 12;
+    const HY: usize = 13;
+    const CB: usize = 14;
+    const CL: usize = 15;
+    const CP: usize = 16;
+    const EX: usize = 17;
+    const IN: usize = 18;
+    const NS: usize = 19;
+    const OP: usize = 20;
+    const QU: usize = 21;
+    const IS: usize = 22;
+    const NU: usize = 23;
+    const PO: usize = 24;
+    const PR: usize = 25;
+    const SY: usize = 26;
+    const AL: usize = 27;
+    const EB: usize = 28;
+    const EM: usize = 29;
+    const H2: usize = 30;
+    const H3: usize = 31;
+    const HL: usize = 32;
+    const ID: usize = 33;
+    const JL: usize = 34;
+    const JV: usize = 35;
+    const JT: usize = 36;
+    const RI: usize = 37;
+    const XX: usize = 38;
+    const LB8_STATE: usize = NUM_OF_CLASSES + 1;
+    const LB14_STATE: usize = NUM_OF_CLASSES + 2;
+    const LB15_STATE: usize = NUM_OF_CLASSES + 3;
+    const LB16_STATE: usize = NUM_OF_CLASSES + 4;
+    const LB17_STATE: usize = NUM_OF_CLASSES + 5;
+    const LB21A_HY_STATE: usize = NUM_OF_CLASSES + 6;
+    const LB21A_BA_STATE: usize = NUM_OF_CLASSES + 7;
+    const LB30A_EVEN_STATE: usize = NUM_OF_CLASSES + 8;
+    const LB9_EXCEPTIONS: [usize; 8] = [BK, CR, LF, NL, SP, ZW, ZWJ, 39];
 
-// fn break_after(state: usize, b: bool, states: &mut Vec<[(usize, bool);
-// NUM_OF_CLASSES]>) {     for c in states[state].iter_mut() {
-//         c.1 = b;
-//     }
-// }
+    fn break_before(class: usize, b: bool, states: &mut Vec<[(usize, bool); NUM_OF_CLASSES]>) {
+        for state in states.iter_mut() {
+            state[class].1 = b;
+        }
+    }
 
-// fn not_allowed_between(c1: Class, c2: Class, states: &mut Vec<[(usize,
-// bool); NUM_OF_CLASSES]>) {     states[c1 as usize][c2 as usize].1 = false;
-// }
+    fn break_after(state: usize, b: bool, states: &mut Vec<[(usize, bool); NUM_OF_CLASSES]>) {
+        for c in states[state].iter_mut() {
+            c.1 = b;
+        }
+    }
 
-// const LB12A_EXCEPTIONS: [usize; 3] = [Class::SP as usize, Class::BA as
-// usize, Class::HY as usize]; let mut states = Vec::new();
-// let mut extra_states = Vec::new();
+    fn not_allowed_between(
+        c1: usize,
+        c2: usize,
+        states: &mut Vec<[(usize, bool); NUM_OF_CLASSES]>,
+    ) {
+        states[c1][c2].1 = false;
+    }
 
-// for _ in 0..(NUM_OF_CLASSES + 1) {
-//     states.push([
-//         (0, true),
-//         (1, true),
-//         (2, true),
-//         (3, true),
-//         (4, true),
-//         (5, true),
-//         (6, true),
-//         (7, true),
-//         (8, true),
-//         (9, true),
-//         (10, true),
-//         (11, true),
-//         (12, true),
-//         (13, true),
-//         (14, true),
-//         (15, true),
-//         (16, true),
-//         (17, true),
-//         (18, true),
-//         (19, true),
-//         (20, true),
-//         (21, true),
-//         (22, true),
-//         (23, true),
-//         (24, true),
-//         (25, true),
-//         (26, true),
-//         (27, true),
-//         (28, true),
-//         (29, true),
-//         (30, true),
-//         (31, true),
-//         (32, true),
-//         (33, true),
-//         (34, true),
-//         (35, true),
-//         (36, true),
-//         (37, true),
-//         (38, true),
-//     ]);
-// }
+    const LB12A_EXCEPTIONS: [usize; 3] = [SP, BA, HY];
+    let mut states = Vec::new();
+    let mut extra_states = Vec::new();
 
-// // LB30b
-// not_allowed_between(Class::EB, Class::EM, &mut states);
+    for _ in 0..(NUM_OF_CLASSES + 1) {
+        states.push([
+            (0, true),
+            (1, true),
+            (2, true),
+            (3, true),
+            (4, true),
+            (5, true),
+            (6, true),
+            (7, true),
+            (8, true),
+            (9, true),
+            (10, true),
+            (11, true),
+            (12, true),
+            (13, true),
+            (14, true),
+            (15, true),
+            (16, true),
+            (17, true),
+            (18, true),
+            (19, true),
+            (20, true),
+            (21, true),
+            (22, true),
+            (23, true),
+            (24, true),
+            (25, true),
+            (26, true),
+            (27, true),
+            (28, true),
+            (29, true),
+            (30, true),
+            (31, true),
+            (32, true),
+            (33, true),
+            (34, true),
+            (35, true),
+            (36, true),
+            (37, true),
+            (38, true),
+        ]);
+    }
 
-// // LB30a
-// not_allowed_between(Class::RI, Class::RI, &mut states);
-// states[Class::RI as usize][Class::RI as usize].0 = LB30A_EVEN_STATE;
+    // LB30b
+    not_allowed_between(EB, EM, &mut states);
 
-// // LB30
-// not_allowed_between(Class::AL, Class::OP, &mut states);
-// not_allowed_between(Class::HL, Class::OP, &mut states);
-// not_allowed_between(Class::NU, Class::OP, &mut states);
+    // LB30a
+    not_allowed_between(RI, RI, &mut states);
+    states[RI][RI].0 = LB30A_EVEN_STATE;
 
-// not_allowed_between(Class::CP, Class::AL, &mut states);
-// not_allowed_between(Class::CP, Class::HL, &mut states);
-// not_allowed_between(Class::CP, Class::NU, &mut states);
+    // LB30
+    not_allowed_between(AL, OP, &mut states);
+    not_allowed_between(HL, OP, &mut states);
+    not_allowed_between(NU, OP, &mut states);
 
-// // LB29
-// not_allowed_between(Class::IS, Class::AL, &mut states);
-// not_allowed_between(Class::IS, Class::HL, &mut states);
+    not_allowed_between(CP, AL, &mut states);
+    not_allowed_between(CP, HL, &mut states);
+    not_allowed_between(CP, NU, &mut states);
 
-// // LB28
-// not_allowed_between(Class::AL, Class::AL, &mut states);
-// not_allowed_between(Class::AL, Class::HL, &mut states);
-// not_allowed_between(Class::HL, Class::AL, &mut states);
-// not_allowed_between(Class::HL, Class::HL, &mut states);
+    // LB29
+    not_allowed_between(IS, AL, &mut states);
+    not_allowed_between(IS, HL, &mut states);
 
-// // LB27
-// not_allowed_between(Class::JL, Class::IN, &mut states);
-// not_allowed_between(Class::JV, Class::IN, &mut states);
-// not_allowed_between(Class::JT, Class::IN, &mut states);
-// not_allowed_between(Class::H2, Class::IN, &mut states);
-// not_allowed_between(Class::H3, Class::IN, &mut states);
+    // LB28
+    not_allowed_between(AL, AL, &mut states);
+    not_allowed_between(AL, HL, &mut states);
+    not_allowed_between(HL, AL, &mut states);
+    not_allowed_between(HL, HL, &mut states);
 
-// not_allowed_between(Class::JL, Class::PO, &mut states);
-// not_allowed_between(Class::JV, Class::PO, &mut states);
-// not_allowed_between(Class::JT, Class::PO, &mut states);
-// not_allowed_between(Class::H2, Class::PO, &mut states);
-// not_allowed_between(Class::H3, Class::PO, &mut states);
+    // LB27
+    not_allowed_between(JL, IN, &mut states);
+    not_allowed_between(JV, IN, &mut states);
+    not_allowed_between(JT, IN, &mut states);
+    not_allowed_between(H2, IN, &mut states);
+    not_allowed_between(H3, IN, &mut states);
 
-// not_allowed_between(Class::PR, Class::JL, &mut states);
-// not_allowed_between(Class::PR, Class::JV, &mut states);
-// not_allowed_between(Class::PR, Class::JT, &mut states);
-// not_allowed_between(Class::PR, Class::H2, &mut states);
-// not_allowed_between(Class::PR, Class::H3, &mut states);
+    not_allowed_between(JL, PO, &mut states);
+    not_allowed_between(JV, PO, &mut states);
+    not_allowed_between(JT, PO, &mut states);
+    not_allowed_between(H2, PO, &mut states);
+    not_allowed_between(H3, PO, &mut states);
 
-// // LB26
-// not_allowed_between(Class::JL, Class::JL, &mut states);
-// not_allowed_between(Class::JL, Class::JV, &mut states);
-// not_allowed_between(Class::JL, Class::H2, &mut states);
-// not_allowed_between(Class::JL, Class::H3, &mut states);
+    not_allowed_between(PR, JL, &mut states);
+    not_allowed_between(PR, JV, &mut states);
+    not_allowed_between(PR, JT, &mut states);
+    not_allowed_between(PR, H2, &mut states);
+    not_allowed_between(PR, H3, &mut states);
 
-// not_allowed_between(Class::JV, Class::JV, &mut states);
-// not_allowed_between(Class::JV, Class::JT, &mut states);
-// not_allowed_between(Class::H2, Class::JV, &mut states);
-// not_allowed_between(Class::H2, Class::JT, &mut states);
+    // LB26
+    not_allowed_between(JL, JL, &mut states);
+    not_allowed_between(JL, JV, &mut states);
+    not_allowed_between(JL, H2, &mut states);
+    not_allowed_between(JL, H3, &mut states);
 
-// not_allowed_between(Class::JT, Class::JT, &mut states);
-// not_allowed_between(Class::H3, Class::JT, &mut states);
+    not_allowed_between(JV, JV, &mut states);
+    not_allowed_between(JV, JT, &mut states);
+    not_allowed_between(H2, JV, &mut states);
+    not_allowed_between(H2, JT, &mut states);
 
-// // LB25
-// not_allowed_between(Class::CL, Class::PO, &mut states);
-// not_allowed_between(Class::CP, Class::PO, &mut states);
-// not_allowed_between(Class::CL, Class::PR, &mut states);
-// not_allowed_between(Class::CP, Class::PR, &mut states);
-// not_allowed_between(Class::NU, Class::PO, &mut states);
-// not_allowed_between(Class::NU, Class::PR, &mut states);
-// not_allowed_between(Class::PO, Class::OP, &mut states);
-// not_allowed_between(Class::PO, Class::NU, &mut states);
-// not_allowed_between(Class::PR, Class::OP, &mut states);
-// not_allowed_between(Class::PR, Class::NU, &mut states);
-// not_allowed_between(Class::HY, Class::NU, &mut states);
-// not_allowed_between(Class::IS, Class::NU, &mut states);
-// not_allowed_between(Class::NU, Class::NU, &mut states);
-// not_allowed_between(Class::SY, Class::NU, &mut states);
+    not_allowed_between(JT, JT, &mut states);
+    not_allowed_between(H3, JT, &mut states);
 
-// // LB24
-// not_allowed_between(Class::PR, Class::AL, &mut states);
-// not_allowed_between(Class::PR, Class::HL, &mut states);
-// not_allowed_between(Class::PO, Class::AL, &mut states);
-// not_allowed_between(Class::PO, Class::HL, &mut states);
-// not_allowed_between(Class::AL, Class::PR, &mut states);
-// not_allowed_between(Class::AL, Class::PO, &mut states);
-// not_allowed_between(Class::HL, Class::PR, &mut states);
-// not_allowed_between(Class::HL, Class::PO, &mut states);
+    // LB25
+    not_allowed_between(CL, PO, &mut states);
+    not_allowed_between(CP, PO, &mut states);
+    not_allowed_between(CL, PR, &mut states);
+    not_allowed_between(CP, PR, &mut states);
+    not_allowed_between(NU, PO, &mut states);
+    not_allowed_between(NU, PR, &mut states);
+    not_allowed_between(PO, OP, &mut states);
+    not_allowed_between(PO, NU, &mut states);
+    not_allowed_between(PR, OP, &mut states);
+    not_allowed_between(PR, NU, &mut states);
+    not_allowed_between(HY, NU, &mut states);
+    not_allowed_between(IS, NU, &mut states);
+    not_allowed_between(NU, NU, &mut states);
+    not_allowed_between(SY, NU, &mut states);
 
-// // LB23a
-// not_allowed_between(Class::PR, Class::ID, &mut states);
-// not_allowed_between(Class::PR, Class::EB, &mut states);
-// not_allowed_between(Class::PR, Class::EM, &mut states);
-// not_allowed_between(Class::ID, Class::PO, &mut states);
-// not_allowed_between(Class::EB, Class::PO, &mut states);
-// not_allowed_between(Class::EM, Class::PO, &mut states);
+    // LB24
+    not_allowed_between(PR, AL, &mut states);
+    not_allowed_between(PR, HL, &mut states);
+    not_allowed_between(PO, AL, &mut states);
+    not_allowed_between(PO, HL, &mut states);
+    not_allowed_between(AL, PR, &mut states);
+    not_allowed_between(AL, PO, &mut states);
+    not_allowed_between(HL, PR, &mut states);
+    not_allowed_between(HL, PO, &mut states);
 
-// // LB23
-// not_allowed_between(Class::AL, Class::NU, &mut states);
-// not_allowed_between(Class::HL, Class::NU, &mut states);
-// not_allowed_between(Class::NU, Class::AL, &mut states);
-// not_allowed_between(Class::NU, Class::HL, &mut states);
+    // LB23a
+    not_allowed_between(PR, ID, &mut states);
+    not_allowed_between(PR, EB, &mut states);
+    not_allowed_between(PR, EM, &mut states);
+    not_allowed_between(ID, PO, &mut states);
+    not_allowed_between(EB, PO, &mut states);
+    not_allowed_between(EM, PO, &mut states);
 
-// // LB22
-// not_allowed_between(Class::AL, Class::IN, &mut states);
-// not_allowed_between(Class::HL, Class::IN, &mut states);
-// not_allowed_between(Class::EX, Class::IN, &mut states);
-// not_allowed_between(Class::ID, Class::IN, &mut states);
-// not_allowed_between(Class::EB, Class::IN, &mut states);
-// not_allowed_between(Class::EM, Class::IN, &mut states);
-// not_allowed_between(Class::IN, Class::IN, &mut states);
-// not_allowed_between(Class::NU, Class::IN, &mut states);
+    // LB23
+    not_allowed_between(AL, NU, &mut states);
+    not_allowed_between(HL, NU, &mut states);
+    not_allowed_between(NU, AL, &mut states);
+    not_allowed_between(NU, HL, &mut states);
 
-// // LB21b
-// not_allowed_between(Class::SY, Class::HL, &mut states);
+    // LB22
+    not_allowed_between(AL, IN, &mut states);
+    not_allowed_between(HL, IN, &mut states);
+    not_allowed_between(EX, IN, &mut states);
+    not_allowed_between(ID, IN, &mut states);
+    not_allowed_between(EB, IN, &mut states);
+    not_allowed_between(EM, IN, &mut states);
+    not_allowed_between(IN, IN, &mut states);
+    not_allowed_between(NU, IN, &mut states);
 
-// // LB21a
-// states[Class::HL as usize][Class::HY as usize].0 = LB21A_HY_STATE;
-// states[Class::HL as usize][Class::BA as usize].0 = LB21A_BA_STATE;
+    // LB21b
+    not_allowed_between(SY, HL, &mut states);
 
-// // LB21
-// break_before(Class::BA, false, &mut states);
-// break_before(Class::HY, false, &mut states);
-// break_before(Class::NS, false, &mut states);
-// break_after(Class::BB as usize, false, &mut states);
+    // LB21a
+    states[HL][HY].0 = LB21A_HY_STATE;
+    states[HL][BA].0 = LB21A_BA_STATE;
 
-// // LB20
-// break_before(Class::CB, true, &mut states);
-// break_after(Class::CB as usize, true, &mut states);
+    // LB21
+    break_before(BA, false, &mut states);
+    break_before(HY, false, &mut states);
+    break_before(NS, false, &mut states);
+    break_after(BB, false, &mut states);
 
-// // LB19
-// break_before(Class::QU, false, &mut states);
-// break_after(Class::QU as usize, false, &mut states);
+    // LB20
+    break_before(CB, true, &mut states);
+    break_after(CB, true, &mut states);
 
-// // LB18
-// break_after(Class::SP as usize, true, &mut states);
+    // LB19
+    break_before(QU, false, &mut states);
+    break_after(QU, false, &mut states);
 
-// // LB17
-// not_allowed_between(Class::B2, Class::B2, &mut states);
-// states[Class::B2 as usize][Class::B2 as usize].1 = false;
-// states[Class::B2 as usize][Class::SP as usize].0 = LB17_STATE;
+    // LB18
+    break_after(SP, true, &mut states);
 
-// // LB16
-// not_allowed_between(Class::CL, Class::NS, &mut states);
-// states[Class::CL as usize][Class::SP as usize].0 = LB16_STATE;
+    // LB17
+    not_allowed_between(B2, B2, &mut states);
+    states[B2][B2].1 = false;
+    states[B2][SP].0 = LB17_STATE;
 
-// not_allowed_between(Class::CP, Class::NS, &mut states);
-// states[Class::CP as usize][Class::SP as usize].0 = LB16_STATE;
+    // LB16
+    not_allowed_between(CL, NS, &mut states);
+    states[CL][SP].0 = LB16_STATE;
 
-// // LB15
-// states[Class::QU as usize][Class::OP as usize].1 = false;
-// states[Class::QU as usize][Class::SP as usize].0 = LB15_STATE;
+    not_allowed_between(CP, NS, &mut states);
+    states[CP][SP].0 = LB16_STATE;
 
-// // LB14
-// break_after(Class::OP as usize, false, &mut states);
-// states[Class::OP as usize][Class::SP as usize].0 = LB14_STATE;
+    // LB15
+    states[QU][OP].1 = false;
+    states[QU][SP].0 = LB15_STATE;
 
-// // LB13
-// break_before(Class::CL, false, &mut states);
-// break_before(Class::CP, false, &mut states);
-// break_before(Class::EX, false, &mut states);
-// break_before(Class::IS, false, &mut states);
-// break_before(Class::SY, false, &mut states);
+    // LB14
+    break_after(OP, false, &mut states);
+    states[OP][SP].0 = LB14_STATE;
 
-// // LB12a
-// for state in states.iter_mut().enumerate().filter_map(|(index, state)| {
-//     if LB12A_EXCEPTIONS.contains(&index) {
-//         None
-//     } else {
-//         Some(state)
-//     }
-// }) {
-//     state[Class::GL as usize].1 = false;
-// }
+    // LB13
+    break_before(CL, false, &mut states);
+    break_before(CP, false, &mut states);
+    break_before(EX, false, &mut states);
+    break_before(IS, false, &mut states);
+    break_before(SY, false, &mut states);
 
-// // LB12
-// break_after(Class::GL as usize, false, &mut states);
+    // LB12a
+    for state in states.iter_mut().enumerate().filter_map(|(index, state)| {
+        if LB12A_EXCEPTIONS.contains(&index) {
+            None
+        } else {
+            Some(state)
+        }
+    }) {
+        state[GL].1 = false;
+    }
 
-// // LB11
-// break_after(Class::WJ as usize, false, &mut states);
-// break_before(Class::WJ, false, &mut states);
+    // LB12
+    break_after(GL, false, &mut states);
 
-// // LB10
-// states[Class::AL as usize][Class::CM as usize].1 = false;
-// states[Class::AL as usize][Class::ZWJ as usize].1 = false;
+    // LB11
+    break_after(WJ, false, &mut states);
+    break_before(WJ, false, &mut states);
 
-// states[Class::CM as usize] = states[Class::AL as usize];
-// states[Class::ZWJ as usize] = states[Class::AL as usize];
+    // LB10
+    states[AL][CM].1 = false;
+    states[AL][ZWJ].1 = false;
 
-// // LB9
-// for (i, state) in states.iter_mut().enumerate().filter_map(|(index, state)| {
-//     if LB9_EXCEPTIONS.contains(&index) {
-//         None
-//     } else {
-//         Some((index, state))
-//     }
-// }) {
-//     state[Class::CM as usize] = (i, false);
-//     state[Class::ZWJ as usize] = (i, false);
-// }
+    states[CM] = states[AL];
+    states[ZWJ] = states[AL];
 
-// // LB8a
-// break_after(Class::ZWJ as usize, false, &mut states);
+    // LB9
+    for (i, state) in states.iter_mut().enumerate().filter_map(|(index, state)| {
+        if LB9_EXCEPTIONS.contains(&index) {
+            None
+        } else {
+            Some((index, state))
+        }
+    }) {
+        state[CM] = (i, false);
+        state[ZWJ] = (i, false);
+    }
 
-// // LB8
-// break_after(Class::ZW as usize, true, &mut states);
-// states[Class::ZW as usize][Class::SP as usize].0 = LB8_STATE;
+    // LB8a
+    break_after(ZWJ, false, &mut states);
 
-// // LB7
-// break_before(Class::SP, false, &mut states);
-// break_before(Class::ZW, false, &mut states);
+    // LB8
+    break_after(ZW, true, &mut states);
+    states[ZW][SP].0 = LB8_STATE;
 
-// // LB6
-// break_before(Class::BK, false, &mut states);
-// break_before(Class::CR, false, &mut states);
-// break_before(Class::LF, false, &mut states);
-// break_before(Class::NL, false, &mut states);
+    // LB7
+    break_before(SP, false, &mut states);
+    break_before(ZW, false, &mut states);
 
-// // LB5
-// break_after(Class::CR as usize, true, &mut states);
-// break_after(Class::LF as usize, true, &mut states);
-// break_after(Class::NL as usize, true, &mut states);
-// not_allowed_between(Class::CR, Class::LF, &mut states);
+    // LB6
+    break_before(BK, false, &mut states);
+    break_before(CR, false, &mut states);
+    break_before(LF, false, &mut states);
+    break_before(NL, false, &mut states);
 
-// // LB4
-// break_after(Class::BK as usize, true, &mut states);
+    // LB5
+    break_after(CR, true, &mut states);
+    break_after(LF, true, &mut states);
+    break_after(NL, true, &mut states);
+    not_allowed_between(CR, LF, &mut states);
 
-// // LB2
-// break_after(NUM_OF_CLASSES, false, &mut states);
+    // LB4
+    break_after(BK, true, &mut states);
 
-// // Special extra states
+    // LB2
+    break_after(NUM_OF_CLASSES, false, &mut states);
 
-// // LB8
-// let mut new_state = states[Class::SP as usize].clone();
-// for part in new_state.iter_mut().enumerate().filter_map(|(i, s)| {
-//     if [
-//         Class::BK as usize,
-//         Class::CR as usize,
-//         Class::LF as usize,
-//         Class::NL as usize,
-//         Class::SP as usize,
-//         Class::ZW as usize,
-//     ].contains(&i)
-//     {
-//         None
-//     } else {
-//         Some(s)
-//     }
-// }) {
-//     part.1 = true;
-// }
-// extra_states.push(new_state);
+    // Special extra states
 
-// // LB14
-// let mut new_state = states[Class::SP as usize].clone();
-// for part in new_state.iter_mut() {
-//     part.1 = false;
-// }
-// extra_states.push(new_state);
+    // LB8
+    let mut new_state = states[SP].clone();
+    for part in new_state.iter_mut().enumerate().filter_map(|(i, s)| {
+        if [BK, CR, LF, NL, SP, ZW].contains(&i) {
+            None
+        } else {
+            Some(s)
+        }
+    }) {
+        part.1 = true;
+    }
+    extra_states.push(new_state);
 
-// // LB15
-// let mut new_state = states[Class::SP as usize].clone();
-// new_state[Class::OP as usize].1 = false;
-// extra_states.push(new_state);
+    // LB14
+    let mut new_state = states[SP].clone();
+    for part in new_state.iter_mut() {
+        part.1 = false;
+    }
+    extra_states.push(new_state);
 
-// // LB16
-// let mut new_state = states[Class::SP as usize].clone();
-// new_state[Class::NS as usize].1 = false;
-// extra_states.push(new_state);
+    // LB15
+    let mut new_state = states[SP].clone();
+    new_state[OP].1 = false;
+    extra_states.push(new_state);
 
-// // LB17
-// let mut new_state = states[Class::SP as usize].clone();
-// new_state[Class::B2 as usize].1 = false;
-// extra_states.push(new_state);
+    // LB16
+    let mut new_state = states[SP].clone();
+    new_state[NS].1 = false;
+    extra_states.push(new_state);
 
-// // LB21a
-// let mut hy_state = states[Class::HY as usize].clone();
-// for part in hy_state.iter_mut() {
-//     part.1 = false;
-// }
-// let mut ba_state = states[Class::BA as usize].clone();
-// for part in ba_state.iter_mut() {
-//     part.1 = false;
-// }
-// extra_states.push(hy_state);
-// extra_states.push(ba_state);
+    // LB17
+    let mut new_state = states[SP].clone();
+    new_state[B2].1 = false;
+    extra_states.push(new_state);
 
-// // LB30a
-// let mut even_state = states[Class::RI as usize].clone();
-// even_state[Class::RI as usize] = (Class::RI as usize, true);
-// extra_states.push(even_state);
+    // LB21a
+    let mut hy_state = states[HY].clone();
+    for part in hy_state.iter_mut() {
+        part.1 = false;
+    }
+    let mut ba_state = states[BA].clone();
+    for part in ba_state.iter_mut() {
+        part.1 = false;
+    }
+    extra_states.push(hy_state);
+    extra_states.push(ba_state);
 
-// states.extend(extra_states.into_iter());
+    // LB30a
+    let mut even_state = states[RI].clone();
+    even_state[RI] = (RI, true);
+    extra_states.push(even_state);
+
+    states.extend(extra_states.into_iter());
+    write!(f, "const NUM_OF_CLASSES: usize = {};\nconst STATES: [[(usize, bool); NUM_OF_CLASSES]; {}] = [", NUM_OF_CLASSES, states.len()).unwrap();
+    for state in states {
+        write!(f, "[").unwrap();
+        for value in state.iter() {
+            write!(f, "{:?},", value).unwrap();
+        }
+        write!(f, "],").unwrap();
+    }
+    write!(f, "];").unwrap();
+}

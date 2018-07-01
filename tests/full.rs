@@ -2,7 +2,7 @@ extern crate regex;
 extern crate uax_14;
 use regex::Regex;
 use std::char;
-use uax_14::{linebreaks_char_indices, convert_to_break_class, Break, Class};
+use uax_14::{char_line_breaks, convert_to_break_class, Break, Class};
 
 // LB25 Disagrees with these tests
 const SKIP_TESTS: [usize; 30] = [
@@ -49,7 +49,7 @@ fn main() {
             .iter()
             .map(|i| char::from_u32(*i).unwrap())
             .collect();
-        let my_answer: Vec<usize> = linebreaks_char_indices(&input_string);
+        let my_answer: Vec<usize> = char_line_breaks(&input_string);
         if my_answer == indices {
             correct += 1;
             if printing {
