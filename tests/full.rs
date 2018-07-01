@@ -2,7 +2,7 @@ extern crate regex;
 extern crate uax_14;
 use regex::Regex;
 use std::char;
-use uax_14::{convert_to_break_class, Break, Class, LineBreaks};
+use uax_14::{linebreaks_char_indices, convert_to_break_class, Break, Class};
 
 // LB25 Disagrees with these tests
 const SKIP_TESTS: [usize; 30] = [
@@ -29,11 +29,15 @@ fn main() {
 
         let parts = caps.get(1).unwrap().as_str();
         let mut converted: Vec<(u32, Break)> = Vec::new();
-        for caps in re2.captures_iter(parts) {
+        let mut indices: Vec<usize> = Vec::new();
+        for (i, caps) in re2.captures_iter(parts).enumerate() {
             let number_str = caps.get(1).unwrap().as_str();
             let number = u32::from_str_radix(number_str, 16).expect("Failed to parse");
             let br = match caps.get(2).unwrap().as_str() {
-                "÷" => Break::Opportunity,
+                "÷" => {
+                    indices.push(i + 1);
+                    Break::Opportunity
+                }
                 "×" => Break::Prohibited,
                 _ => panic!(),
             };
@@ -45,16 +49,8 @@ fn main() {
             .iter()
             .map(|i| char::from_u32(*i).unwrap())
             .collect();
-        let my_answer: Vec<(u32, Break)> = LineBreaks::new(&input_string)
-            .map(|(a, b)| {
-                if b == Break::Mandatory {
-                    (a as u32, Break::Opportunity)
-                } else {
-                    (a as u32, b)
-                }
-            })
-            .collect();
-        if my_answer == converted {
+        let my_answer: Vec<usize> = linebreaks_char_indices(&input_string);
+        if my_answer == indices {
             correct += 1;
             if printing {
                 print!("i");
@@ -66,7 +62,7 @@ fn main() {
                     "\nindex: {}\nMy answer:\n{:?}\nRight answer:\n{:?}\nMy Classes:\n{:?}",
                     i + 1,
                     my_answer,
-                    converted,
+                    indices,
                     just_codepoints
                         .iter()
                         .map(|a| convert_to_break_class(char::from_u32(*a).unwrap()))

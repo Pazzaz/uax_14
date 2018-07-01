@@ -2110,6 +2110,46 @@ pub struct LineBreaks<'a> {
     current_state: usize,
 }
 
+/// Create a list of all char indices where a line break could be placed.
+/// 
+/// This gives back indices that correspond to `char`s in the original input. So 0 is before the first `char`, 1 after the first `char` etc.
+pub fn linebreaks_char_indices(input: &str) -> Vec<usize> {
+    linebreaks(input, true)
+}
+
+/// Create a list of all byte indices where a line break could be placed.
+/// 
+/// This gives back indices that correspond to bytes in the original input. So 0 is before the first byte, 1 after the first byte etc. This is useful when you want to slice a `str` depending on where line breaks are allowed.
+pub fn linebreaks_byte_indices(input: &str) -> Vec<usize> {
+    linebreaks(input, false)
+}
+
+fn linebreaks(input: &str, char_indices: bool) -> Vec<usize> {
+    let mut current_state = NUM_OF_CLASSES;
+    let mut len = 0;
+    let mut full: Vec<usize> = input
+        .char_indices()
+        .map(|(index, ch)|(index, convert_to_break_class(ch)))
+        .enumerate()
+        .filter_map(|(char_index, (byte_index, class))| {
+            let (new_state, break_allowed) = STATES[current_state][class as usize];
+            current_state = new_state;
+            len += 1;
+            if break_allowed {
+                if char_indices {
+                    Some(char_index)
+                } else {
+                    Some(byte_index)
+                }
+            } else {
+                None
+            }
+        })
+        .collect();
+    full.push(len);
+    full
+}
+
 impl<'a> LineBreaks<'a> {
     /// Construct a `LineBreaks` from a `&str`.
     #[inline]
@@ -2122,6 +2162,7 @@ impl<'a> LineBreaks<'a> {
         out.possible_break(convert_to_break_class(*i.peek().unwrap()));
         out
     }
+
     fn possible_break(&mut self, c: Class) -> bool {
         let (new_state, br) = STATES[self.current_state][c as usize];
         self.current_state = new_state;
